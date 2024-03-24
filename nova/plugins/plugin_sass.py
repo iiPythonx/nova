@@ -5,10 +5,12 @@ import platform
 import subprocess
 from pathlib import Path
 
+from nova.internal.building import NovaBuilder
+
 # Handle plugin
 class SassPlugin():
-    def __init__(self, source: Path, destination: Path, config: dict) -> None:
-        self.source, self.destination = source, destination
+    def __init__(self, builder: NovaBuilder, config: dict) -> None:
+        self.source, self.destination = builder.source, builder.destination
 
         # Load mappings
         self.config = config

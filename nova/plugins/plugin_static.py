@@ -3,14 +3,16 @@
 # Modules
 import os
 import shutil
+import atexit
 from pathlib import Path
 
-import atexit
+from nova.internal.building import NovaBuilder
 
 # Handle plugin
 class StaticPlugin():
-    def __init__(self, source: Path, destination: Path, config: dict) -> None:
-        self.source, self.destination, self.config = source, destination, config
+    def __init__(self, builder: NovaBuilder, config: dict) -> None:
+        self.source, self.destination, self.config = \
+            builder.source, builder.destination, config
 
         # Setup file paths
         self.paths = [
