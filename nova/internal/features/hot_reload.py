@@ -29,8 +29,22 @@ def attach_hot_reloading(
             # Calculate the relative paths and send off
             paths = []
             for change in changes:
-                relative = Path(change[1]).relative_to(builder.source).with_suffix("")
-                paths.append(f"/{str(relative.parent) + '/' if str(relative.parent) != '.' else ''}{relative.name if relative.name != 'index' else ''}")
+                relative = Path(change[1]).relative_to(builder.source)
+                need_reload = []
+
+                # Check if this change is part of a file dependency (ie. css or js)
+                if relative.suffix in builder.file_assocs:
+                    check_path = builder.file_assocs[relative.suffix](relative)
+                    for path, dependencies in builder.build_dependencies.items():
+                        if check_path in dependencies:
+                            need_reload.append(path)
+
+                if not need_reload:
+                    need_reload += [relative]
+
+                for page in need_reload:
+                    clean = page.with_suffix("")
+                    paths.append(f"/{str(clean.parent) + '/' if str(clean.parent) != '.' else ''}{clean.name if clean.name != 'index' else ''}")
 
             app.publish("reload", json.dumps({"reload": paths}), OpCode.TEXT)
 

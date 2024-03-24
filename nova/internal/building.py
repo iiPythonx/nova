@@ -2,8 +2,10 @@
 
 # Modules
 import os
+import re
 import time
 from pathlib import Path
+from types import FunctionType
 
 from rich import print
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -14,6 +16,7 @@ hotreload_js_snippet = """
     if (JSON.parse(e.data).reload.includes(window.location.pathname)) window.location.reload();
 });
 """.strip()
+reference_regex = re.compile(r"<(?:link)?(?:script)? .* (?:href)?(?:src)? ?= ?['\"](.*)['\"]>")
 
 # Main class
 class NovaBuilder():
@@ -27,8 +30,9 @@ class NovaBuilder():
             autoescape = select_autoescape()
         )
 
-        # Initial plugins
+        # Initial variable setup
         self.plugins = []
+        self.file_assocs, self.build_dependencies = {}, {}
 
     def register_plugins(self, plugins: list) -> None:
         self.plugins += plugins
@@ -58,9 +62,15 @@ class NovaBuilder():
                     # I said Nova was fast, never said it was W3C compliant
                     template_html = f"<script>{hotreload_js_snippet}</script>\n{template_html}"
 
+                    # Additionally, check for any CSS/JS references to keep track of
+                    self.build_dependencies[relative_location] = re.findall(reference_regex, template_html)
+
                 # Finally, write it to the file
                 destination_location.write_text(template_html)
 
         # Handle plugins
         for plugin in self.plugins:
             plugin.on_build(include_hot_reload)
+
+    def register_file_associations(self, extension: str, callback: FunctionType) -> None:
+        self.file_assocs[extension] = callback
