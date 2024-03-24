@@ -1,5 +1,6 @@
 # Hide local development project
 demo_project/
+nova.json
 
 # Hide Python related stuff
 __pycache__/

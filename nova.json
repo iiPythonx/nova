@@ -1,9 +1,0 @@
-{
-    "project": {
-        "source": ".",
-        "destination": "."
-    },
-    "plugins": {
-        "autowebp": {}
-    }
-}
