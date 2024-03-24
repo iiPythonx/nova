@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 from rich import print
 
-from .plugins import available_plugins
+from .plugins import fetch_plugin
 
 from .internal import create_app, NovaBuilder
 from .internal.features import attach_hot_reloading
@@ -29,10 +29,7 @@ builder = NovaBuilder(
 # Initialize plugins
 active_plugins = []
 for plugin, config in config.get("plugins", {}).items():
-    if plugin not in available_plugins:
-        raise Exception(f"Unknown plugin name: '{plugin}'")
-
-    active_plugins.append(available_plugins[plugin](builder, config))
+    active_plugins.append(fetch_plugin(plugin)(builder, config))
 
 builder.register_plugins(active_plugins)
 
