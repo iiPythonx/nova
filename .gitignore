@@ -1,0 +1,6 @@
+# Hide local development project
+demo_project/
+
+# Hide Python related stuff
+__pycache__/
+.venv/

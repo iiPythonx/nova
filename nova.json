@@ -1,0 +1,17 @@
+{
+    "project": {
+        "source": "src/",
+        "destination": "dist/"
+    },
+    "plugins": {
+        "sass": {
+            "mapping": "scss:css",
+            "style": "compressed"
+        },
+        "static": {
+            "paths": [
+                "favicon.ico"
+            ]
+        }
+    }
+}
