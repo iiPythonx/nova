@@ -1,4 +1,4 @@
 # Nova
-## A static site framework for people who like to keep it simple.
+## A site building framework for people who like to keep it simple.
 
 More details to come.
