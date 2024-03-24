@@ -56,7 +56,9 @@ class NovaBuilder():
                 destination_location.parent.mkdir(exist_ok = True)
 
                 # Handle hot-reloading JS (if enabled)
-                template_html = self.environ.get_template(str(relative_location)).render()
+                template_html = self.environ.get_template(str(relative_location)).render(
+                    relative = self.get_relative_location
+                )
                 if include_hot_reload:
 
                     # I said Nova was fast, never said it was W3C compliant
@@ -74,3 +76,10 @@ class NovaBuilder():
 
     def register_file_associations(self, extension: str, callback: FunctionType) -> None:
         self.file_assocs[extension] = callback
+
+    def get_relative_location(self, path: str) -> str:
+        path = Path(path)
+        if path.suffix in self.file_assocs:
+            return self.file_assocs[path.suffix](path)
+        
+        return str(path)

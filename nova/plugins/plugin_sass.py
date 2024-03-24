@@ -22,7 +22,7 @@ class SassPlugin():
 
         # Locate the appropriate binary
         system = platform.system().lower()
-        self.sass_binary = Path(__file__).parent / "sass" / system / ("sass" if system == "linux" else "sass.bat")
+        self.sass_binary = Path(__file__).parent / "binaries" / system / ("sass" if system == "linux" else "sass.bat")
 
     def on_build(self, dev: bool) -> None:
         subprocess.run([

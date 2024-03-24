@@ -22,10 +22,9 @@ available_plugins = {
     "static": {
         "module": plugin_load_callback(".plugin_static", "StaticPlugin")
     },
-    # "autowebp": {
-    #     "module": plugin_load_callback(".plugin_autowebp", "AutoWebpPlugin"),
-    #     "requirements": ["pillow", "beautifulsoup4"]
-    # }
+    "typescript": {
+        "module": plugin_load_callback(".plugin_typescript", "TypescriptPlugin"),
+    }
 }
 
 # Plugin loading wrapper
