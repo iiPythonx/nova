@@ -29,9 +29,9 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/iiPython/nova#readme"
-Issues = "https://github.com/iiPython/nova/issues"
-Source = "https://github.com/iiPython/nova"
+Documentation = "https://github.com/iiPythonx/nova#readme"
+Issues = "https://github.com/iiPythonx/nova/issues"
+Source = "https://github.com/iiPythonx/nova"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nova"]
