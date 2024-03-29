@@ -33,8 +33,14 @@ Documentation = "https://github.com/iiPython/nova#readme"
 Issues = "https://github.com/iiPython/nova/issues"
 Source = "https://github.com/iiPython/nova"
 
+[tool.hatch.build.targets.wheel]
+packages = ["nova"]
+include = [
+  "nova/plugins/binaries"
+]
+
 [tool.hatch.version]
-path = "src/nova/__init__.py"
+path = "nova/__init__.py"
 
 [[tool.hatch.envs.all.matrix]]
 python = ["3.11", "3.12"]

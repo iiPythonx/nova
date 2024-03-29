@@ -5,3 +5,4 @@ nova.json
 # Hide Python related stuff
 __pycache__/
 .venv/
+dist/
