@@ -1,5 +1,0 @@
-rich
-click
-jinja2
-socketify
-watchfiles
