@@ -33,6 +33,12 @@ Documentation = "https://github.com/iiPythonx/nova#readme"
 Issues = "https://github.com/iiPythonx/nova/issues"
 Source = "https://github.com/iiPythonx/nova"
 
+[tool.hatch.build.targets.sdist]
+packages = ["nova"]
+include = [
+  "nova/plugins/binaries"
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["nova"]
 include = [
