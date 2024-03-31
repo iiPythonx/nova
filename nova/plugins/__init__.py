@@ -1,12 +1,18 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
+import os
+import platform
 import subprocess
 from shutil import which
+from pathlib import Path
+from typing import Dict, Tuple
 from types import FunctionType
 from importlib import import_module
 
 from rich.console import Console
+
+from nova.internal.building import NovaBuilder
 
 # Handle plugin initialization
 def plugin_load_callback(name: str, class_name: str) -> FunctionType:
@@ -67,3 +73,38 @@ def fetch_plugin(plugin_name: str) -> object:
         else:
             rcon.print(f"Running '{installation_command}' should install them on your system.")
             exit(1)
+
+# Helping class for repetitive external tool plugins
+class StaticFileBasedBuilder():
+    def __init__(
+        self,
+        file_associations: Tuple[str],
+        destination_extension: str,
+        default_mapping: str,
+        build_binaries: Dict[str, str],
+        builder: NovaBuilder,
+        config: dict
+    ) -> None:
+        self.destination_extension = destination_extension
+        self.source, self.destination = builder.source, builder.destination
+
+        for association in file_associations:
+            builder.register_file_associations(association, self.patch_filename)
+
+        # Load mappings
+        self.config = config
+        self.mapping = self.config.get("mapping", default_mapping).split(":")
+
+        # Adjust the source and destination to match the mapping
+        self.source = self.source / self.mapping[0]
+        self.destination = self.destination / self.mapping[1]
+
+        # Locate the appropriate binary
+        system = platform.system().lower()
+        self.build_binary = Path(__file__).parent / "binaries" / system / build_binaries[system]
+
+    def patch_filename(self, filename: Path) -> str:
+        if filename.parents[-2].name != self.mapping[0]:  # Not our problem
+            return str(filename)
+        
+        return str(Path(os.sep.join([self.mapping[1]] + str(filename).split(os.sep)[1:])).with_suffix(self.destination_extension))
