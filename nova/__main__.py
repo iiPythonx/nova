@@ -56,6 +56,9 @@ if config_file.is_file():
     @click.option("--reload", is_flag = True, help = "Enables Nova's hot-reloading feature.")
     def serve(host: str, port: int, reload: bool) -> None:
         """Launches a local development server with the built app."""
+        builder.wrapped_build(include_hot_reload = reload)
+
+        # Handle app
         app = create_app(host, port, builder)
         if reload:
             attach_hot_reloading(app, builder)
