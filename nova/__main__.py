@@ -2,6 +2,7 @@
 
 # Modules
 import json
+import webbrowser
 from pathlib import Path
 
 import click
@@ -54,7 +55,8 @@ if config_file.is_file():
     @click.option("--host", default = "0.0.0.0", help = "Gives socketify a specified host to run on, defaults to 0.0.0.0.")
     @click.option("--port", default = 8000, type = int, help = "Gives socketify a specified port to bind to, defaults to 8000.")
     @click.option("--reload", is_flag = True, help = "Enables Nova's hot-reloading feature.")
-    def serve(host: str, port: int, reload: bool) -> None:
+    @click.option("--open", is_flag = True, help = "Automatically opens the web server in your default browser.")
+    def serve(host: str, port: int, reload: bool, open: bool) -> None:
         """Launches a local development server with the built app."""
         builder.wrapped_build(include_hot_reload = reload)
 
@@ -62,6 +64,9 @@ if config_file.is_file():
         app = create_app(host, port, builder)
         if reload:
             attach_hot_reloading(app, builder)
+
+        if open:
+            webbrowser.open(f"http://{'localhost' if host == '0.0.0.0' else host}:{port}", 2)
 
         app.run()
 
