@@ -17,6 +17,7 @@ hotreload_js_snippet = """
 });
 """.strip()
 reference_regex = re.compile(r"<(?:link)?(?:script)? .* (?:href)?(?:src)? ?= ?['\"](.*)['\"]>")
+jinja2_regex = re.compile(r"{% \w* [\"'](\w.+)[\"'][\w ]* %}")
 
 # Main class
 class NovaBuilder():
@@ -56,7 +57,8 @@ class NovaBuilder():
                 destination_location.parent.mkdir(exist_ok = True)
 
                 # Handle hot-reloading JS (if enabled)
-                template_html = self.environ.get_template(str(relative_location)).render(
+                template_html = self.environ.get_template(str(relative_location))
+                template_html = template_html.render(
                     relative = self.get_relative_location
                 )
                 if include_hot_reload:
@@ -66,6 +68,7 @@ class NovaBuilder():
 
                     # Additionally, check for any CSS/JS references to keep track of
                     self.build_dependencies[relative_location] = re.findall(reference_regex, template_html)
+                    self.build_dependencies[relative_location] += re.findall(jinja2_regex, (self.source / relative_location).read_text())
 
                 # Finally, write it to the file
                 destination_location.write_text(template_html)

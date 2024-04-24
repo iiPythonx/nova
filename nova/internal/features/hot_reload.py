@@ -39,7 +39,18 @@ def attach_hot_reloading(
                         if check_path in dependencies:
                             need_reload.append(path)
 
-                if not need_reload:
+                else:
+                    def recurse(search_path: str, need_reload: list = []) -> list:
+                        for path, dependencies in builder.build_dependencies.items():
+                            if search_path in dependencies:
+                                need_reload.append(path)
+                                recurse(str(path), need_reload)
+
+                        return need_reload
+
+                    need_reload = recurse(str(relative))
+
+                if relative not in need_reload:
                     need_reload += [relative]
 
                 for page in need_reload:

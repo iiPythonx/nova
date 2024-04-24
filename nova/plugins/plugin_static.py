@@ -48,6 +48,9 @@ class StaticPlugin():
                 os.symlink(source, destination)
 
             else:
+                if destination.exists():
+                    self.remove(destination)
+
                 (shutil.copytree if source.is_dir() else shutil.copy)(source, destination)
 
     def ensure_symlink_removal(self) -> None:
