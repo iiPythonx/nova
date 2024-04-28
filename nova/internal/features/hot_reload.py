@@ -50,7 +50,7 @@ def attach_hot_reloading(
 
                     need_reload = recurse(str(relative))
 
-                if relative not in need_reload:
+                if relative.suffix == ".jinja2" and relative not in need_reload:
                     need_reload += [relative]
 
                 for page in need_reload:

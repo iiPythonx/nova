@@ -16,7 +16,7 @@ hotreload_js_snippet = """
     if (JSON.parse(e.data).reload.includes(window.location.pathname)) window.location.reload();
 });
 """.strip()
-reference_regex = re.compile(r"<(?:link)?(?:script)? .* (?:href)?(?:src)? ?= ?['\"](.*)['\"]>")
+reference_regex = re.compile(r"<(?:link|script) (?:href|src) ?= ?[\"']([\w/.]+)[\"'].*>")
 jinja2_regex = re.compile(r"{% \w* [\"'](\w.+)[\"'][\w ]* %}")
 
 # Main class
@@ -56,18 +56,21 @@ class NovaBuilder():
                 destination_location = self.destination / relative_location.with_suffix(".html")
                 destination_location.parent.mkdir(exist_ok = True)
 
-                # Handle hot-reloading JS (if enabled)
+                # Handle hot-reloading (if enabled)
                 template_html = self.environ.get_template(str(relative_location)).render(
                     relative = self.get_relative_location
                 )
                 if include_hot_reload:
+                    template_content = (self.source / relative_location).read_text()
 
                     # I said Nova was fast, never said it was W3C compliant
                     template_html = f"<script>{hotreload_js_snippet}</script>\n{template_html}"
 
-                    # Additionally, check for any CSS/JS references to keep track of
-                    self.build_dependencies[relative_location] = re.findall(reference_regex, template_html)
-                    self.build_dependencies[relative_location] += re.findall(jinja2_regex, (self.source / relative_location).read_text())
+                    # Additionally, check for any path references to keep track of
+                    self.build_dependencies[relative_location] = [
+                        dep.lstrip("/") for dep in re.findall(reference_regex, template_content) + \
+                            re.findall(jinja2_regex, template_content)
+                    ]
 
                 # Finally, write it to the file
                 destination_location.write_text(template_html)
