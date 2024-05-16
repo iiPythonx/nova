@@ -17,7 +17,7 @@ class StaticPlugin():
         # Setup file paths
         self.paths = [
             (self.source / path, self.destination / path)
-            for path in self.config.get("paths", [])
+            for path in self.config
         ]
 
         # Hooks
