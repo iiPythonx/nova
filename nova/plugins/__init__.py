@@ -30,6 +30,10 @@ available_plugins = {
     },
     "typescript": {
         "module": plugin_load_callback(".plugin_typescript", "TypescriptPlugin"),
+    },
+    "minify": {
+        "module": plugin_load_callback(".plugin_minify", "MinifyPlugin"),
+        "requirements": ["minify-html"]
     }
 }
 
