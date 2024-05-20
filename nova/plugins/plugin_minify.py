@@ -2,7 +2,6 @@
 
 # Modules
 import os
-import subprocess
 from pathlib import Path
 
 from nova.internal.building import NovaBuilder
@@ -13,7 +12,7 @@ import minify_html
 # If you need to adjust these, you should do so in nova.json, not here.
 # https://docs.rs/minify-html/latest/minify_html/struct.Cfg.html
 config_defaults = {
-    "minify_js": True,
+    "minify_js": False,
     "minify_css": True,
     "remove_processing_instructions": True,
     "do_not_minify_doctype": True,

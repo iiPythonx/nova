@@ -10,8 +10,7 @@ from bs4 import BeautifulSoup
 from nova.internal.building import NovaBuilder
 
 # JS template
-template_js = """<script>
-const pages = [%s];
+template_js = """const pages = [%s];
 const length = location.origin.length;
 const cache = {};
 for (const link of document.getElementsByTagName("a")) {
@@ -30,13 +29,14 @@ for (const link of document.getElementsByTagName("a")) {
         document.querySelector("%s").innerHTML = cache[relative];
         history.pushState(null, document.title, relative);
     });
-}</script>"""
+}"""
 
 # Handle plugin
 class SPAPlugin():
     def __init__(self, builder: NovaBuilder, config: dict) -> None:
         mapping = config["mapping"].split(":")
-        self.config, self.target, (self.source, self.destination) = config, config["target"], mapping
+        self.config, self.target, self.external, (self.source, self.destination) = \
+            config, config["target"], config["external"], mapping
 
         # Handle remapping
         self.source = builder.destination / self.source
@@ -48,6 +48,14 @@ class SPAPlugin():
             for file in self.source.iterdir()
         ])
         snippet = template_js % (page_list, self.config["title"], self.config["title_sep"], self.target)
+        if self.external:
+            js_location = self.destination / "js/spa.js"
+            js_location.parent.mkdir(parents = True, exist_ok = True)
+            js_location.write_text(snippet)
+            snippet = "<script src = \"/js/spa.js\" async defer>"
+
+        else:
+            snippet = f"<script>{snippet}</script>"
 
         # Handle iteration
         for path, _, files in os.walk(self.source):

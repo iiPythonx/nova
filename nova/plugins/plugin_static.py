@@ -38,15 +38,15 @@ class StaticPlugin():
                     self.remove(destination)
                     continue
 
-                elif dev:
+                if not destination.parent.is_dir():
+                    destination.parent.mkdir(parents = True)
+
+                if dev:
                     if destination.is_symlink():
                         continue
 
                     elif destination.exists():
                         self.remove(destination)
-
-                    elif not destination.parent.is_dir():
-                        destination.parent.mkdir()
 
                     os.symlink(source, destination)
 

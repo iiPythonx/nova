@@ -22,22 +22,22 @@ def plugin_load_callback(name: str, class_name: str) -> FunctionType:
     return load_plugin
 
 available_plugins = {
-    "sass": {
-        "module": plugin_load_callback(".plugin_sass", "SassPlugin")
-    },
     "static": {
         "module": plugin_load_callback(".plugin_static", "StaticPlugin")
+    },
+    "sass": {
+        "module": plugin_load_callback(".plugin_sass", "SassPlugin")
     },
     "typescript": {
         "module": plugin_load_callback(".plugin_typescript", "TypescriptPlugin"),
     },
-    "minify": {
-        "module": plugin_load_callback(".plugin_minify", "MinifyPlugin"),
-        "requirements": ["minify-html"]
-    },
     "spa": {
         "module": plugin_load_callback(".plugin_spa", "SPAPlugin"),
         "requirements": ["beautifulsoup4"]
+    },
+    "minify": {
+        "module": plugin_load_callback(".plugin_minify", "MinifyPlugin"),
+        "requirements": ["minify-html"]
     }
 }
 
