@@ -1,7 +1,7 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
-import json
+import tomllib
 import webbrowser
 from pathlib import Path
 
@@ -28,14 +28,15 @@ def version() -> None:
     rcon.print(f"[yellow bold]{version_string}[/]")
 
 # Initialization
-config_file = Path("nova.json")
+config_file = Path("nova.toml")
 if config_file.is_file():
-    config = json.loads(config_file.read_text())
+    config = tomllib.loads(config_file.read_text())
 
     # Setup building
+    mapping = config["project"]["mapping"].split(":")
     builder = NovaBuilder(
-        Path(config["project"]["source"]).absolute(),
-        Path(config["project"]["destination"]).absolute()
+        Path(mapping[0]).absolute(),
+        Path(mapping[1]).absolute()
     )
 
     # Initialize plugins

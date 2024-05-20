@@ -34,6 +34,10 @@ available_plugins = {
     "minify": {
         "module": plugin_load_callback(".plugin_minify", "MinifyPlugin"),
         "requirements": ["minify-html"]
+    },
+    "spa": {
+        "module": plugin_load_callback(".plugin_spa", "SPAPlugin"),
+        "requirements": ["beautifulsoup4"]
     }
 }
 

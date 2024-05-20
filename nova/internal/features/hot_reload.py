@@ -23,6 +23,9 @@ def attach_hot_reloading(
     signal.signal(signal.SIGINT, lambda s, f: stop_event.set())
 
     def hot_reload_thread(app: App) -> None:
+        located_spa = [x for x in builder.plugins if type(x).__name__ == "SPAPlugin"]
+        spa_module = located_spa[0] if located_spa else None
+
         for changes in watch(builder.source, stop_event = stop_event):
             builder.wrapped_build(include_hot_reload = True)
 
@@ -50,7 +53,12 @@ def attach_hot_reloading(
 
                     need_reload = recurse(str(relative))
 
-                if relative.suffix == ".jinja2" and relative not in need_reload:
+                if relative.suffix in [".jinja2", ".jinja", ".j2"] and relative not in need_reload:
+                    if spa_module is not None:
+                        relative_spa_dest = spa_module.source.relative_to(builder.destination)
+                        if relative.is_relative_to(relative_spa_dest):
+                            relative = relative.relative_to(relative_spa_dest)
+
                     need_reload += [relative]
 
                 for page in need_reload:

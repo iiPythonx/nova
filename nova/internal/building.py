@@ -49,7 +49,7 @@ class NovaBuilder():
     ) -> None:
         for path, _, files in os.walk(self.source):
             for file in files:
-                if not file.endswith(".jinja2"):
+                if file.split(".")[-1] not in ["j2", "jinja2", "jinja"]:
                     continue
 
                 relative_location = (Path(path) / Path(file)).relative_to(self.source)
@@ -64,7 +64,7 @@ class NovaBuilder():
                     template_content = (self.source / relative_location).read_text()
 
                     # I said Nova was fast, never said it was W3C compliant
-                    template_html = f"<script>{hotreload_js_snippet}</script>\n{template_html}"
+                    template_html = f"{template_html}<script>{hotreload_js_snippet}</script>"
 
                     # Additionally, check for any path references to keep track of
                     self.build_dependencies[relative_location] = [
