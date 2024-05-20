@@ -21,7 +21,7 @@ class NoncePlugin():
 
             content = BeautifulSoup(file.read_text(), "html.parser")
             for object in content.find_all(["script", "link", "style"]):
-                if object.name == "link" and object.rel != "stylesheet":
+                if object.name == "link" and object.get("rel") != ["stylesheet"]:
                     continue
 
                 object["nonce"] = self.nonce
