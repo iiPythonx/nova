@@ -40,7 +40,7 @@ if config_file.is_file():
     )
 
     # Initialize plugins
-    active_plugins = []
+    active_plugins = [fetch_plugin("static")(builder, {})]
     for plugin, config in config.get("plugins", {}).items():
         active_plugins.append(fetch_plugin(plugin)(builder, config))
 
@@ -96,7 +96,7 @@ else:
 
         # Write to file
         with Path("nova.json").open("w") as fh:
-            fh.write(json.dumps({
+            fh.write(tomllib.dumps({
                 "project": {
                     "source": source_location,
                     "destination": destination_location

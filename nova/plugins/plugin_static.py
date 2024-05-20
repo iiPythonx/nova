@@ -11,14 +11,8 @@ from nova.internal.building import NovaBuilder
 # Handle plugin
 class StaticPlugin():
     def __init__(self, builder: NovaBuilder, config: dict) -> None:
-        self.source, self.destination, self.config = \
-            builder.source, builder.destination, config
-
-        # Setup file paths
-        self.paths = [
-            (self.source / path, self.destination / path)
-            for path in self.config
-        ]
+        self.source, self.destination = \
+            builder.source / "static", builder.destination
 
         # Hooks
         atexit.register(self.ensure_symlink_removal)
@@ -33,27 +27,41 @@ class StaticPlugin():
         (shutil.rmtree if path.is_dir() else os.remove)(path)
 
     def on_build(self, dev: bool) -> None:
-        for source, destination in self.paths:
-            if not source.exists():
-                self.remove(destination)
-                continue
+        if not self.source.is_dir():
+            return
 
-            elif dev:
-                if destination.is_symlink():
+        for source_path, _, source_files in os.walk(self.source):
+            for source_file in source_files:
+                source = Path(source_path) / Path(source_file)
+                destination = self.destination / source.relative_to(self.source)
+                if not source.exists():
+                    self.remove(destination)
                     continue
 
-                elif destination.exists():
-                    self.remove(destination)
+                elif dev:
+                    if destination.is_symlink():
+                        continue
 
-                os.symlink(source, destination)
+                    elif destination.exists():
+                        self.remove(destination)
 
-            else:
-                if destination.exists():
-                    self.remove(destination)
+                    elif not destination.parent.is_dir():
+                        destination.parent.mkdir()
 
-                (shutil.copytree if source.is_dir() else shutil.copy)(source, destination)
+                    os.symlink(source, destination)
+
+                else:
+                    if destination.exists():
+                        self.remove(destination)
+
+                    (shutil.copytree if source.is_dir() else shutil.copy)(source, destination)
 
     def ensure_symlink_removal(self) -> None:
-        for source, destination in self.paths:
-            if destination.is_symlink():
-                self.remove(destination)
+        for path, _, files in os.walk(self.destination):
+            for file in files:
+                destination = (Path(path) / Path(file))
+                if destination.is_symlink():
+                    self.remove(destination)
+
+            if not os.listdir(path):
+                shutil.rmtree(path)
