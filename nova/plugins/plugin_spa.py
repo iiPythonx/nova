@@ -1,10 +1,7 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
-import os
 import shutil
-from pathlib import Path
-
 from bs4 import BeautifulSoup
 
 from nova.internal.building import NovaBuilder
@@ -58,18 +55,19 @@ class SPAPlugin():
             snippet = f"<script>{snippet}</script>"
 
         # Handle iteration
-        for path, _, files in os.walk(self.source):
-            for file in files:
-                full_path = Path(path) / Path(file)
-                new_location = self.destination / (full_path.relative_to(self.source))
+        for file in self.source.rglob("*"):
+            if not file.is_file():
+                continue
 
-                # Add JS snippet
-                shutil.copy(full_path, new_location)
-                soup = BeautifulSoup(new_location.read_text(), "html.parser")
-                (soup.find("body") or soup).append(BeautifulSoup(snippet, "html.parser"))
-                new_location.write_text(str(soup))
+            new_location = self.destination / (file.relative_to(self.source))
 
-                # Strip out everything except for the content
-                target_data = BeautifulSoup(full_path.read_text(), "html.parser").select_one(self.target)
-                if target_data is not None:
-                    full_path.write_bytes(target_data.encode_contents())
+            # Add JS snippet
+            shutil.copy(file, new_location)
+            soup = BeautifulSoup(new_location.read_text(), "html.parser")
+            (soup.find("body") or soup).append(BeautifulSoup(snippet, "html.parser"))
+            new_location.write_text(str(soup))
+
+            # Strip out everything except for the content
+            target_data = BeautifulSoup(file.read_text(), "html.parser").select_one(self.target)
+            if target_data is not None:
+                file.write_bytes(target_data.encode_contents())

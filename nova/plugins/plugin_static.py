@@ -57,11 +57,10 @@ class StaticPlugin():
                     (shutil.copytree if source.is_dir() else shutil.copy)(source, destination)
 
     def ensure_symlink_removal(self) -> None:
-        for path, _, files in os.walk(self.destination):
-            for file in files:
-                destination = (Path(path) / Path(file))
-                if destination.is_symlink():
-                    self.remove(destination)
+        for file in self.destination.rglob("*"):
+            if file.is_symlink():
+                self.remove(file)
 
-            if not os.listdir(path):
-                shutil.rmtree(path)
+        for file in self.destination.rglob("*"):
+            if file.is_dir() and not any([x.is_file() for x in file.rglob("*")]):
+                shutil.rmtree(file)

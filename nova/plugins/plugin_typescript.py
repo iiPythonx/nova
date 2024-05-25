@@ -1,9 +1,7 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
-import os
 import subprocess
-from pathlib import Path
 
 from . import StaticFileBasedBuilder
 
@@ -19,13 +17,14 @@ class TypescriptPlugin(StaticFileBasedBuilder):
         )
 
     def on_build(self, dev: bool) -> None:
-        for path, _, files in os.walk(self.source):
-            for file in files:
-                path = Path(path)
-                subprocess.run([
-                    self.build_binary,
-                    "compile",
-                    path / file,
-                    "--out-file",
-                    self.destination / path.relative_to(self.source) / file.replace(".ts", ".js")
-                ])
+        for file in self.source.rglob("*"):
+            if not file.is_file():
+                continue
+
+            subprocess.run([
+                self.build_binary,
+                "compile",
+                file,
+                "--out-file",
+                self.destination / file.with_suffix(".js").relative_to(self.source)
+            ])
