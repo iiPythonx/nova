@@ -2,31 +2,14 @@
 
 # Modules
 import shutil
+from pathlib import Path
+
 from bs4 import BeautifulSoup
 
 from nova.internal.building import NovaBuilder
 
-# JS template
-template_js = """const pages = [%s];
-const length = location.origin.length;
-const cache = {};
-for (const link of document.getElementsByTagName("a")) {
-    const relative = link.href.slice(length);
-    if (!pages.includes(relative)) continue;
-    const load_page = async () => {
-        if (cache[relative]) return;
-        cache[relative] = await (await fetch(`/pages${relative === '/' ? '/index' : relative}`)).text();
-        removeEventListener("mouseover", load_page);
-    };
-    link.addEventListener("mouseover", load_page);
-    link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const title = relative.slice(1);
-        document.title = `%s${title && ('%s' + title[0].toUpperCase() + title.slice(1))}`;
-        document.querySelector("%s").innerHTML = cache[relative];
-        history.pushState(null, document.title, relative);
-    });
-}"""
+# Initialization
+template_js = (Path(__file__).parents[1] / "assets/spa.js").read_text()
 
 # Handle plugin
 class SPAPlugin():
@@ -44,7 +27,7 @@ class SPAPlugin():
             f"\"/{file.relative_to(self.source).with_suffix('') if file.name != 'index.html' else ''}\""
             for file in self.source.iterdir()
         ])
-        snippet = template_js % (page_list, self.config["title"], self.config["title_sep"], self.target)
+        snippet = template_js % (page_list, self.target, self.config["title"], self.config["title_sep"])
         if self.external:
             js_location = self.destination / "js/spa.js"
             js_location.parent.mkdir(parents = True, exist_ok = True)

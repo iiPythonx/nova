@@ -45,7 +45,8 @@ include = [
 [tool.hatch.build.targets.wheel]
 packages = ["nova"]
 include = [
-  "nova/plugins/binaries"
+  "nova/plugins/binaries",
+  "nova/assets"
 ]
 
 [tool.hatch.version]
