@@ -46,10 +46,10 @@ class MinifyPlugin():
         subprocess.run(["uglifyjs", path, "-c", "-m", "-o", path])
 
     def _minify_css(self, path: Path) -> None:
-        path.write_text(minify_html.minify("<style>" + path.read_text())[8:])
+        path.write_text(minify_html.minify("<style>" + path.read_text("utf8"))[8:], "utf8")
 
     def _minify_html(self, path: Path) -> None:
-        path.write_text(minify_html.minify(path.read_text(), **self.options))
+        path.write_text(minify_html.minify(path.read_text("utf8"), **self.options), "utf8")
 
     def on_build(self, dev: bool) -> None:
         if dev and not self.config.get("minify_dev"):

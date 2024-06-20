@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from nova.internal.building import NovaBuilder
 
 # Initialization
-template_js = (Path(__file__).parents[1] / "assets/spa.js").read_text()
+template_js = (Path(__file__).parents[1] / "assets/spa.js").read_text("utf8")
 
 # Handle plugin
 class SPAPlugin():
@@ -31,7 +31,7 @@ class SPAPlugin():
         if self.external:
             js_location = self.destination / "js/spa.js"
             js_location.parent.mkdir(parents = True, exist_ok = True)
-            js_location.write_text(snippet)
+            js_location.write_text(snippet, "utf8")
             snippet = "<script src = \"/js/spa.js\" async defer>"
 
         else:
@@ -46,11 +46,11 @@ class SPAPlugin():
 
             # Add JS snippet
             shutil.copy(file, new_location)
-            soup = BeautifulSoup(new_location.read_text(), "html.parser")
+            soup = BeautifulSoup(new_location.read_text("utf8"), "html.parser")
             (soup.find("body") or soup).append(BeautifulSoup(snippet, "html.parser"))
-            new_location.write_text(str(soup))
+            new_location.write_text(str(soup), "utf8")
 
             # Strip out everything except for the content
-            target_data = BeautifulSoup(file.read_text(), "html.parser").select_one(self.target)
+            target_data = BeautifulSoup(file.read_text("utf8"), "html.parser").select_one(self.target)
             if target_data is not None:
                 file.write_bytes(target_data.encode_contents())

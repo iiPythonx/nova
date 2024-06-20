@@ -30,7 +30,7 @@ def version() -> None:
 # Initialization
 config_file = Path("nova.toml")
 if config_file.is_file():
-    config = toml.loads(config_file.read_text())
+    config = toml.loads(config_file.read_text("utf8"))
 
     # Setup building
     mapping = config["project"]["mapping"].split(":")
@@ -95,7 +95,7 @@ else:
         check_path(destination_location)
 
         # Write to file
-        Path("nova.toml").write_text(toml.dumps({"project": {"source": source_location, "destination": destination_location}}))
+        config_file.write_text(toml.dumps({"project": {"source": source_location, "destination": destination_location}}))
 
 # Handle launching CLI
 if __name__ == "__main__":

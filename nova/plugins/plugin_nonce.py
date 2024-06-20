@@ -19,11 +19,11 @@ class NoncePlugin():
             if not file.suffix == ".html":
                 continue
 
-            content = BeautifulSoup(file.read_text(), "html.parser")
+            content = BeautifulSoup(file.read_text("utf8"), "html.parser")
             for object in content.find_all(["script", "link", "style"]):
                 if object.name == "link" and object.get("rel") != ["stylesheet"]:
                     continue
 
                 object["nonce"] = self.nonce
 
-            file.write_text(str(content))
+            file.write_text(str(content), "utf8")

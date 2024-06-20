@@ -61,7 +61,7 @@ class NovaBuilder():
                     relative = self.get_relative_location
                 )
                 if include_hot_reload:
-                    template_content = (self.source / relative_location).read_text()
+                    template_content = (self.source / relative_location).read_text("utf8")
 
                     # I said Nova was fast, never said it was W3C compliant
                     template_html = f"{template_html}<script>{hotreload_js_snippet}</script>"
@@ -73,7 +73,7 @@ class NovaBuilder():
                     ]
 
                 # Finally, write it to the file
-                destination_location.write_text(template_html)
+                destination_location.write_text(template_html, "utf8")
 
         # Handle plugins
         for plugin in self.plugins:
