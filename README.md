@@ -41,54 +41,6 @@ All project configuration should be put inside of `nova.toml` in your working di
 mapping = "source_path:destination_path"
 ```
 
-##### Plugins / Single Page App
+##### Plugins
 
-```toml
-[plugins.spa]
-title = "My Website"
-title_sep = "-"
-
-# Target element the JS will swap out
-target = ".any_css_selector" 
-
-# These are relative to your configured paths
-# ie. source_path/relative_source and destination_path/relative_destination
-mapping = "relative_source:relative_destination"
-
-# Skip embedding the JS into the file and just add a script-src?
-external = true
-```
-
-##### Plugins / Minification
-
-```toml
-[plugins.minify]
-
-# Available options are .js, .css, and .html
-suffixes = [".html", ".js"]
-
-[plugins.minify.options]
-
-# See https://docs.rs/minify-html/latest/minify_html/struct.Cfg.html
-# This section only applies to HTML minification
-keep_comments = true
-keep_closing_tags = false
-```
-
-##### Plugins / Nonce
-
-```toml
-[plugins.nonce]
-
-# This nonce will be added to every link, script, and style tag
-nonce = "Z2TFyOVC69nS8fvS/tC/Lw=="
-```
-
-##### Plugins / Typescript
-
-```toml
-[plugins.typescript]
-
-# These are relative to your configured paths
-# ie. source_path/ts and destination_path/js
-mapping = "ts:js"
+See [PLUGINS.md](./docs/PLUGINS.md).
