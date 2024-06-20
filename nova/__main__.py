@@ -95,7 +95,7 @@ else:
         check_path(destination_location)
 
         # Write to file
-        config_file.write_text(toml.dumps({"project": {"source": source_location, "destination": destination_location}}))
+        config_file.write_text(toml.dumps({"project": {"mapping": f"{source_location}:{destination_location}"}}))
 
 # Handle launching CLI
 if __name__ == "__main__":
