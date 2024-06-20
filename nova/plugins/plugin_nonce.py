@@ -16,7 +16,7 @@ class NoncePlugin():
             return
 
         for file in self.destination.rglob("*"):
-            if not file.suffix == ".html":
+            if file.suffix != ".html":
                 continue
 
             content = BeautifulSoup(file.read_text("utf8"), "html.parser")
