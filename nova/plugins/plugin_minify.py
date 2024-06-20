@@ -42,11 +42,16 @@ class MinifyPlugin():
             rcon.print("[yellow]\u26a0  The minify plugin requires uglifyjs in order to perform JS minification.[/]")
             self.config["suffixes"].remove(".js")
 
+        # Check for csso-cli
+        if ".css" in self.config["suffixes"] and not shutil.which("csso"):
+            rcon.print("[yellow]\u26a0  The minify plugin requires csso-cli in order to perform CSS minification.[/]")
+            self.config["suffixes"].remove(".css")
+
     def _minify_js(self, path: Path) -> None:
         subprocess.run(["uglifyjs", path, "-c", "-m", "-o", path])
 
     def _minify_css(self, path: Path) -> None:
-        path.write_text(minify_html.minify("<style>" + path.read_text("utf8"))[8:], "utf8")
+        subprocess.run(["csso", "-i", path, "-o", path])
 
     def _minify_html(self, path: Path) -> None:
         path.write_text(minify_html.minify(path.read_text("utf8"), **self.options), "utf8")
