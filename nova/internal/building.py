@@ -57,7 +57,7 @@ class NovaBuilder():
                 destination_location.parent.mkdir(exist_ok = True)
 
                 # Handle hot-reloading (if enabled)
-                template_html = self.environ.get_template(str(relative_location)).render(
+                template_html = self.environ.get_template(str(relative_location).replace(os.sep, "/")).render(
                     relative = self.get_relative_location
                 )
                 if include_hot_reload:
