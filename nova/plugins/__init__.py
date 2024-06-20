@@ -14,6 +14,9 @@ from rich.console import Console
 
 from nova.internal.building import NovaBuilder
 
+# Plugin specified encoding
+encoding = "utf8"
+
 # Handle plugin initialization
 def plugin_load_callback(name: str, class_name: str) -> FunctionType:
     def load_plugin() -> None:
