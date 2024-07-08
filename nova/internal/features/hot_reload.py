@@ -29,6 +29,15 @@ def attach_hot_reloading(
         for changes in watch(builder.source, stop_event = stop_event):
             builder.wrapped_build(include_hot_reload = True)
 
+            # Path handling
+            def convert_path(path: Path) -> Path:
+                if spa_module is not None:
+                    relative_spa_dest = spa_module.source.relative_to(builder.destination)
+                    if path.is_relative_to(relative_spa_dest):
+                        path = path.relative_to(relative_spa_dest)
+
+                return path
+
             # Calculate the relative paths and send off
             paths = []
             for change in changes:
@@ -46,7 +55,7 @@ def attach_hot_reloading(
                     def recurse(search_path: str, need_reload: list = []) -> list:
                         for path, dependencies in builder.build_dependencies.items():
                             if search_path in dependencies:
-                                need_reload.append(path)
+                                need_reload.append(convert_path(path))
                                 recurse(str(path), need_reload)
 
                         return need_reload
@@ -54,12 +63,7 @@ def attach_hot_reloading(
                     need_reload = recurse(str(relative))
 
                 if relative.suffix in [".jinja2", ".jinja", ".j2"] and relative not in need_reload:
-                    if spa_module is not None:
-                        relative_spa_dest = spa_module.source.relative_to(builder.destination)
-                        if relative.is_relative_to(relative_spa_dest):
-                            relative = relative.relative_to(relative_spa_dest)
-
-                    need_reload += [relative]
+                    need_reload += [convert_path(relative)]
 
                 for page in need_reload:
                     clean = page.with_suffix("")
