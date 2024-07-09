@@ -3,6 +3,7 @@
 # Modules
 import json
 import signal
+from typing import List
 from pathlib import Path
 from threading import Thread, Event
 
@@ -11,11 +12,54 @@ from socketify import App, WebSocket, OpCode, CompressOptions
 
 from nova.internal import NovaBuilder
 
+# Handle
+class FileAssociator():
+    def __init__(self, builder: NovaBuilder) -> None:
+        self.spa = builder.plugins.get("SPAPlugin")
+        self.builder = builder
+
+        # Handle path conversion
+        self.convert_path = lambda path: path
+        if self.spa is not None:
+            self.spa_relative = self.spa.source.relative_to(builder.destination)
+            self.convert_path = self._convert_path
+
+    def _convert_path(self, path: Path) -> Path:
+        return path.relative_to(self.spa_relative) \
+            if path.is_relative_to(self.spa_relative) else path
+
+    def calculate_reloads(self, relative_path: Path) -> List[Path]:
+        reloads = []
+
+        # Check if this change is part of a file dependency (ie. css or js)
+        if relative_path.suffix in self.builder.file_assocs:
+            check_path = self.builder.file_assocs[relative_path.suffix](relative_path)
+            for path, dependencies in self.builder.build_dependencies.items():
+                if check_path in dependencies:
+                    reloads.append(path)
+
+        else:
+            def recurse(search_path: str, reloads: list = []) -> list:
+                for path, dependencies in self.builder.build_dependencies.items():
+                    if search_path in dependencies:
+                        reloads.append(self.convert_path(path))
+                        recurse(str(path), reloads)
+
+                return reloads
+
+            reloads = recurse(str(relative_path))
+
+        if relative_path.suffix in [".jinja2", ".jinja", ".j2"] and relative_path not in reloads:
+            reloads.append(self.convert_path(relative_path))
+
+        return reloads
+
 # Main attachment
 def attach_hot_reloading(
     app: App,
     builder: NovaBuilder
 ) -> None:
+    associator = FileAssociator(builder)
     async def connect_ws(ws: WebSocket) -> None: 
         ws.subscribe("reload")
 
@@ -23,49 +67,13 @@ def attach_hot_reloading(
     signal.signal(signal.SIGINT, lambda s, f: stop_event.set())
 
     def hot_reload_thread(app: App) -> None:
-        located_spa = [x for x in builder.plugins if type(x).__name__ == "SPAPlugin"]
-        spa_module = located_spa[0] if located_spa else None
-
         for changes in watch(builder.source, stop_event = stop_event):
             builder.wrapped_build(include_hot_reload = True)
 
-            # Path handling
-            def convert_path(path: Path) -> Path:
-                if spa_module is not None:
-                    relative_spa_dest = spa_module.source.relative_to(builder.destination)
-                    if path.is_relative_to(relative_spa_dest):
-                        path = path.relative_to(relative_spa_dest)
-
-                return path
-
-            # Calculate the relative paths and send off
+            # Convert paths to relative
             paths = []
             for change in changes:
-                relative = Path(change[1]).relative_to(builder.source)
-                need_reload = []
-
-                # Check if this change is part of a file dependency (ie. css or js)
-                if relative.suffix in builder.file_assocs:
-                    check_path = builder.file_assocs[relative.suffix](relative)
-                    for path, dependencies in builder.build_dependencies.items():
-                        if check_path in dependencies:
-                            need_reload.append(path)
-
-                else:
-                    def recurse(search_path: str, need_reload: list = []) -> list:
-                        for path, dependencies in builder.build_dependencies.items():
-                            if search_path in dependencies:
-                                need_reload.append(convert_path(path))
-                                recurse(str(path), need_reload)
-
-                        return need_reload
-
-                    need_reload = recurse(str(relative))
-
-                if relative.suffix in [".jinja2", ".jinja", ".j2"] and relative not in need_reload:
-                    need_reload += [convert_path(relative)]
-
-                for page in need_reload:
+                for page in associator.calculate_reloads(Path(change[1]).relative_to(builder.source)):
                     clean = page.with_suffix("")
                     paths.append(f"/{str(clean.parent) + '/' if str(clean.parent) != '.' else ''}{clean.name if clean.name != 'index' else ''}")
 

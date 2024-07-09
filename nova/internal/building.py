@@ -10,15 +10,6 @@ from types import FunctionType
 from rich import print
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-# Initialization
-hotreload_js_snippet = """
-(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener("message", (e) => {
-    if (JSON.parse(e.data).reload.includes(window.location.pathname)) window.location.reload();
-});
-""".strip()
-reference_regex = re.compile(r"<(?:link|script) (?:href|src) ?= ?[\"']([\w/.]+)[\"'].*>")
-jinja2_regex = re.compile(r"{% \w* [\"'](\w.+)[\"'][\w ]* %}")
-
 # Main class
 class NovaBuilder():
     def __init__(self, source: Path, destination: Path) -> None:
@@ -32,11 +23,15 @@ class NovaBuilder():
         )
 
         # Initial variable setup
-        self.plugins = []
+        self.plugins = {}
         self.file_assocs, self.build_dependencies = {}, {}
 
+        # Regex
+        self._rgx_jinja = re.compile(r"{% \w* [\"'](\w.+)[\"'][\w ]* %}")
+        self._rgx_reference = re.compile(r"<(?:link|script) (?:href|src) ?= ?[\"']([\w/.]+)[\"'].*>")
+
     def register_plugins(self, plugins: list) -> None:
-        self.plugins += plugins
+        self.plugins |= {type(plugin).__name__: plugin for plugin in plugins}
 
     def wrapped_build(self, *args, **kwargs) -> None:
         start = time.time()
@@ -64,19 +59,19 @@ class NovaBuilder():
                     template_content = (self.source / relative_location).read_text("utf8")
 
                     # I said Nova was fast, never said it was W3C compliant
-                    template_html = f"{template_html}<script>{hotreload_js_snippet}</script>"
+                    template_html = template_html + "<script>(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener(\"message\",e=>{if(JSON.parse(e.data).reload.includes(window.location.pathname))window.location.reload();});</script>"
 
                     # Additionally, check for any path references to keep track of
                     self.build_dependencies[relative_location] = [
-                        dep.lstrip("/") for dep in re.findall(reference_regex, template_content) + \
-                            re.findall(jinja2_regex, template_content)
+                        dep.lstrip("/") for dep in re.findall(self._rgx_reference, template_content) + \
+                            re.findall(self._rgx_jinja, template_content)
                     ]
 
                 # Finally, write it to the file
-                destination_location.write_text(template_html, "utf8")
+                destination_location.write_text(template_html)
 
         # Handle plugins
-        for plugin in self.plugins:
+        for plugin in self.plugins.values():
             plugin.on_build(include_hot_reload)
 
     def register_file_associations(self, extension: str, callback: FunctionType) -> None:

@@ -9,7 +9,7 @@ import click
 from rich.console import Console
 
 from . import __version__
-from .plugins import fetch_plugin
+from .plugins import fetch_plugin, encoding
 from .internal import create_app, NovaBuilder
 from .internal.features import attach_hot_reloading
 
@@ -30,7 +30,7 @@ def version() -> None:
 # Initialization
 config_file = Path("nova.toml")
 if config_file.is_file():
-    config = toml.loads(config_file.read_text("utf8"))
+    config = toml.loads(config_file.read_text(encoding))
 
     # Setup building
     mapping = config["project"]["mapping"].split(":")

@@ -32,7 +32,7 @@ class SPAPlugin():
         if self.external:
             js_location = self.destination / "js/spa.js"
             js_location.parent.mkdir(parents = True, exist_ok = True)
-            js_location.write_text(snippet, encoding)
+            js_location.write_text(snippet)
             snippet = "<script src = \"/js/spa.js\" async defer>"
 
         else:
@@ -49,7 +49,7 @@ class SPAPlugin():
             shutil.copy(file, new_location)
             soup = BeautifulSoup(new_location.read_text(encoding), "html.parser")
             (soup.find("body") or soup).append(BeautifulSoup(snippet, "html.parser"))
-            new_location.write_text(str(soup), encoding)
+            new_location.write_text(str(soup))
 
             # Strip out everything except for the content
             target_data = BeautifulSoup(file.read_text(encoding), "html.parser").select_one(self.target)

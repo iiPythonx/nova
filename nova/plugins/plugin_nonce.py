@@ -27,4 +27,4 @@ class NoncePlugin():
 
                 object["nonce"] = self.nonce
 
-            file.write_text(str(content), encoding)
+            file.write_text(str(content))
