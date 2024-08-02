@@ -26,7 +26,8 @@ class SPAPlugin():
     def on_build(self, dev: bool) -> None:
         page_list = ", ".join([
             f"\"/{file.relative_to(self.source).with_suffix('') if file.name != 'index.html' else ''}\""
-            for file in self.source.iterdir()
+            for file in self.source.rglob("*")
+            if file.is_file()
         ])
         snippet = template_js % (page_list, self.target, self.config["title"], self.config["title_sep"])
         if self.external:
@@ -44,6 +45,7 @@ class SPAPlugin():
                 continue
 
             new_location = self.destination / (file.relative_to(self.source))
+            new_location.parent.mkdir(exist_ok = True, parents = True)
 
             # Add JS snippet
             shutil.copy(file, new_location)
