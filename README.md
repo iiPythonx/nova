@@ -19,7 +19,7 @@ pip install git+https://github.com/iiPythonx/nova
 
 To initialize a Nova project, just run `nova init` and follow the instructions:
 ```sh
-🚀 Nova 0.7.2 | Project Initialization
+🚀 Nova 0.8.1 | Project Initialization
 Source location (default: src): src/
 Destination location (default: dist): dist/
 ```
@@ -44,3 +44,12 @@ mapping = "source_path:destination_path"
 ##### Plugins
 
 See [PLUGINS.md](./docs/PLUGINS.md).
+
+
+### Troubleshooting
+
+Ensure you have uvloop installed:
+```sh
+pacman -S libuv
+dnf install libuv
+apt install libuv1
