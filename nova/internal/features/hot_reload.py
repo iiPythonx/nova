@@ -10,7 +10,7 @@ from threading import Thread, Event
 from watchfiles import watch
 from socketify import App, WebSocket, OpCode, CompressOptions
 
-from nova.internal import NovaBuilder
+from nova.internal.building import NovaBuilder
 
 # Handle
 class FileAssociator():

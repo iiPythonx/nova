@@ -10,8 +10,7 @@ from rich.console import Console
 
 from . import __version__
 from .plugins import fetch_plugin, encoding
-from .internal import create_app, NovaBuilder
-from .internal.features import attach_hot_reloading
+from .internal.building import NovaBuilder
 
 # CLI
 rcon = Console()
@@ -40,9 +39,9 @@ if config_file.is_file():
     )
 
     # Initialize plugins
-    active_plugins = [fetch_plugin("static")(builder, {})]
+    active_plugins = [fetch_plugin("static")(builder, {})]  # type: ignore
     for plugin, config in config.get("plugins", {}).items():
-        active_plugins.append(fetch_plugin(plugin)(builder, config))
+        active_plugins.append(fetch_plugin(plugin)(builder, config))  # type: ignore
 
     builder.register_plugins(active_plugins)
 
@@ -59,6 +58,9 @@ if config_file.is_file():
     @click.option("--open", is_flag = True, help = "Automatically opens the web server in your default browser.")
     def serve(host: str, port: int, reload: bool, open: bool) -> None:
         """Launches a local development server with the built app."""
+        from .internal.routing import create_app
+        from .internal.features import attach_hot_reloading
+
         builder.wrapped_build(include_hot_reload = reload)
 
         # Handle app
@@ -83,16 +85,15 @@ else:
         destination_location = rcon.input("Destination location (default: [green]dist[/]): ") or "dist"
 
         # Create them if they don't exist
-        def check_path(path: str) -> None:
-            path = Path(path)
+        def check_path(path: Path) -> None:
             if not (not path.is_file() and path.parent.is_dir()):
                 rcon.print(f"\n[red]> Invalid location given: '{path}'.[/]")
                 exit(1)
 
             path.mkdir(exist_ok = True)
 
-        check_path(source_location)
-        check_path(destination_location)
+        check_path(Path(source_location))
+        check_path(Path(destination_location))
 
         # Write to file
         config_file.write_text(toml.dumps({"project": {"mapping": f"{source_location}:{destination_location}"}}))
