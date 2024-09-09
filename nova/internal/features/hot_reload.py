@@ -41,7 +41,7 @@ class FileAssociator():
         else:
             def recurse(search_path: str, reloads: list = []) -> list:
                 for path, dependencies in self.builder.build_dependencies.items():
-                    if search_path in dependencies:
+                    if search_path.lstrip("static/") in dependencies:
                         reloads.append(self.convert_path(path))
                         recurse(str(path), reloads)
 

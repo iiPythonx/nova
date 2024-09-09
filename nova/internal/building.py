@@ -28,7 +28,7 @@ class NovaBuilder():
 
         # Regex
         self._rgx_jinja = re.compile(r"{% \w* [\"'](\w.+)[\"'][\w ]* %}")
-        self._rgx_reference = re.compile(r"<(?:link|script) (?:href|src) ?= ?[\"']([\w/.]+)[\"'].*>")
+        self._rgx_reference = re.compile(r"<(?:link|script).* (?:href|src) ?= ?[\"']([\w/.]+)[\"'].*>")
 
     def register_plugins(self, plugins: list) -> None:
         self.plugins |= {type(plugin).__name__: plugin for plugin in plugins}
@@ -63,7 +63,8 @@ class NovaBuilder():
 
                     # Additionally, check for any path references to keep track of
                     self.build_dependencies[relative_location] = [
-                        dep.lstrip("/") for dep in re.findall(self._rgx_reference, template_content) + \
+                        str(relative_location.parent / Path(dep)) if dep.startswith(".") else dep.lstrip("/")
+                        for dep in re.findall(self._rgx_reference, template_content) + \
                             re.findall(self._rgx_jinja, template_content)
                     ]
 
