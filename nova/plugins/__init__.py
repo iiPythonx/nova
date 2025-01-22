@@ -2,12 +2,11 @@
 
 # Modules
 import os
+import typing
 import platform
 import subprocess
 from shutil import which
 from pathlib import Path
-from typing import Dict, Tuple
-from types import FunctionType
 from importlib import import_module
 
 from rich.console import Console
@@ -18,7 +17,7 @@ from nova.internal.building import NovaBuilder
 encoding = "utf8"
 
 # Handle plugin initialization
-def plugin_load_callback(name: str, class_name: str) -> FunctionType:
+def plugin_load_callback(name: str, class_name: str) -> typing.Callable:
     def load_plugin() -> None:
         return getattr(import_module(name, "nova.plugins"), class_name)
 
@@ -93,10 +92,10 @@ def fetch_plugin(plugin_name: str) -> object:
 class StaticFileBasedBuilder():
     def __init__(
         self,
-        file_associations: Tuple[str],
+        file_associations: tuple[str],
         destination_extension: str,
         default_mapping: str,
-        build_binaries: Dict[str, str],
+        build_binaries: dict[str, str],
         builder: NovaBuilder,
         config: dict
     ) -> None:

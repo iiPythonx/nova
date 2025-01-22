@@ -35,7 +35,8 @@ if config_file.is_file():
     mapping = config["project"]["mapping"].split(":")
     builder = NovaBuilder(
         Path(mapping[0]).absolute(),
-        Path(mapping[1]).absolute()
+        Path(mapping[1]).absolute(),
+        config["project"].get("after_build_command")
     )
 
     # Initialize plugins

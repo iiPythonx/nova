@@ -4,17 +4,21 @@
 import os
 import re
 import time
+import shlex
+import typing
+import subprocess
 from pathlib import Path
-from types import FunctionType
 
 from rich import print
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 # Main class
-class NovaBuilder():
-    def __init__(self, source: Path, destination: Path) -> None:
+class NovaBuilder:
+    def __init__(self, source: Path, destination: Path, after_build_command: typing.Optional[str]) -> None:
         self.source, self.destination = source, destination
         self.destination.mkdir(exist_ok = True)
+
+        self.after_build_command = after_build_command if (after_build_command or "").strip() else None
 
         # Create Jinja2 environment
         self.environ = Environment(
@@ -75,11 +79,17 @@ class NovaBuilder():
         for plugin in self.plugins.values():
             plugin.on_build(include_hot_reload)
 
-    def register_file_associations(self, extension: str, callback: FunctionType) -> None:
+        # Handle running additional commands
+        if self.after_build_command is not None:
+            subprocess.run(shlex.split(self.after_build_command))
+
+    def register_file_associations(self, extension: str, callback: typing.Callable) -> None:
         self.file_assocs[extension] = callback
 
-    def get_relative_location(self, path: str) -> str:
-        path = Path(path)
+    def get_relative_location(self, path: Path | str) -> str:
+        if isinstance(path, str):
+            path = Path(path)
+
         if path.suffix in self.file_assocs:
             return self.file_assocs[path.suffix](path)
         

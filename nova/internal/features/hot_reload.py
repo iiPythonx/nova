@@ -3,7 +3,6 @@
 # Modules
 import json
 import signal
-from typing import List
 from pathlib import Path
 from threading import Thread, Event
 
@@ -28,7 +27,7 @@ class FileAssociator():
         return path.relative_to(self.spa_relative) \
             if path.is_relative_to(self.spa_relative) else path
 
-    def calculate_reloads(self, relative_path: Path) -> List[Path]:
+    def calculate_reloads(self, relative_path: Path) -> list[Path]:
         reloads = []
 
         # Check if this change is part of a file dependency (ie. css or js)
