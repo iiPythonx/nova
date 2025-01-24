@@ -1,13 +1,13 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
-from bs4 import BeautifulSoup
+from selectolax.lexbor import LexborHTMLParser
 
 from . import encoding
 from nova.internal.building import NovaBuilder
 
 # Handle plugin
-class NoncePlugin():
+class NoncePlugin:
     def __init__(self, builder: NovaBuilder, config: dict) -> None:
         self.nonce = config["nonce"]
         self.destination = builder.destination
@@ -20,11 +20,11 @@ class NoncePlugin():
             if file.suffix != ".html":
                 continue
 
-            content = BeautifulSoup(file.read_text(encoding), "html.parser")
-            for object in content.find_all(["script", "link", "style"]):
-                if object.name == "link" and object.get("rel") != ["stylesheet"]:
+            root = LexborHTMLParser(file.read_text(encoding))
+            for element in root.css("script, link, style"):
+                if element.tag == "link" and element.attrs.get("rel") != "stylesheet":
                     continue
 
-                object["nonce"] = self.nonce
+                element.attrs["nonce"] = self.nonce
 
-            file.write_text(str(content))
+            file.write_text(root.html)  # type: ignore

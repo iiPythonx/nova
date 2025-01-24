@@ -35,7 +35,7 @@ config_defaults = {
 }
 
 # Handle plugin
-class MinifyPlugin():
+class MinifyPlugin:
     def __init__(self, builder: NovaBuilder, config: dict) -> None:
         self.builder, self.config = builder, config
         self.options = config_defaults | config.get("options", {})

@@ -9,7 +9,7 @@ from pathlib import Path
 from nova.internal.building import NovaBuilder
 
 # Handle plugin
-class StaticPlugin():
+class StaticPlugin:
     def __init__(self, builder: NovaBuilder, config: dict) -> None:
         self.source, self.destination = \
             builder.source / "static", builder.destination

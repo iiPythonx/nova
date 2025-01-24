@@ -4,7 +4,7 @@
 import shutil
 from pathlib import Path
 
-from bs4 import BeautifulSoup
+from selectolax.lexbor import LexborHTMLParser
 
 from . import encoding
 from nova.internal.building import NovaBuilder
@@ -13,7 +13,7 @@ from nova.internal.building import NovaBuilder
 template_js = (Path(__file__).parents[1] / "assets/spa.js").read_text(encoding)
 
 # Handle plugin
-class SPAPlugin():
+class SPAPlugin:
     def __init__(self, builder: NovaBuilder, config: dict) -> None:
         mapping = config["mapping"].split(":")
         self.config, self.target, self.external, (self.source, self.destination) = \
@@ -23,11 +23,19 @@ class SPAPlugin():
         self.source = builder.destination / self.source
         self.destination = builder.destination / self.destination
 
+        # Handle caching
+        self._cached_files = None
+
     def on_build(self, dev: bool) -> None:
+        files = [file for file in self.source.rglob("*") if file.is_file()]
+        if files == self._cached_files:
+            return
+
+        self._cached_files = files
+
         page_list = ", ".join([
             f"\"/{file.relative_to(self.source).with_suffix('') if file.name != 'index.html' else ''}\""
-            for file in self.source.rglob("*")
-            if file.is_file()
+            for file in files
         ])
         snippet = template_js % (page_list, self.target, self.config["title"], self.config["title_sep"])
         if self.external:
@@ -49,11 +57,11 @@ class SPAPlugin():
 
             # Add JS snippet
             shutil.copy(file, new_location)
-            soup = BeautifulSoup(new_location.read_text(encoding), "html.parser")
-            (soup.find("body") or soup).append(BeautifulSoup(snippet, "html.parser"))
-            new_location.write_text(str(soup))
+            root = LexborHTMLParser(new_location.read_text(encoding))
+            (root.css_first("body") or root).insert_child(snippet)
+            new_location.write_text(root.html)
 
             # Strip out everything except for the content
-            target_data = BeautifulSoup(file.read_text(encoding), "html.parser").select_one(self.target)
-            if target_data is not None:
-                file.write_bytes(target_data.encode_contents())
+            target = LexborHTMLParser(file.read_text(encoding)).css_first(self.target)
+            if target is not None:
+                file.write_text(target.html)
