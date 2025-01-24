@@ -9,6 +9,7 @@ from threading import Event
 
 from watchfiles import awatch
 
+from .interface import Interface
 from .building import NovaBuilder
 
 # Handle
@@ -57,7 +58,8 @@ class FileAssociator:
 async def attach_hot_reloading(
     builder: NovaBuilder,
     kill: typing.Callable,
-    broadcast: typing.Callable
+    broadcast: typing.Callable,
+    interface: Interface
 ) -> None:
     stop_event = Event()
     def handle_sigint(sig, frame):
@@ -68,7 +70,7 @@ async def attach_hot_reloading(
 
     associator = FileAssociator(builder)
     async for changes in awatch(builder.source, stop_event = stop_event):
-        builder.wrapped_build(include_hot_reload = True)
+        time = builder.wrapped_build(include_hot_reload = True)
 
         # Convert paths to relative
         paths = []
@@ -78,3 +80,4 @@ async def attach_hot_reloading(
                 paths.append(f"/{str(clean.parent) + '/' if str(clean.parent) != '.' else ''}{clean.name if clean.name != 'index' else ''}")
 
         await broadcast(paths)
+        interface.update_last_change(str(Path(change[1]).relative_to(builder.source)), time, paths) # type: ignore

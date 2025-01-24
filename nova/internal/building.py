@@ -37,10 +37,10 @@ class NovaBuilder:
     def register_plugins(self, plugins: list) -> None:
         self.plugins |= {type(plugin).__name__: plugin for plugin in plugins}
 
-    def wrapped_build(self, *args, **kwargs) -> None:
+    def wrapped_build(self, *args, **kwargs) -> float:
         start = time.time()
         self.perform_build(*args, **kwargs)
-        print(f"[green]\u2713 App built in [bold]{round((time.time() - start) * 1000, 2)}ms[/]![/]")
+        return round((time.time() - start) * 1000, 2)
 
     def perform_build(
         self,

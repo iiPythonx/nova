@@ -59,10 +59,10 @@ if config_file.is_file():
     @click.option("--open", is_flag = True, help = "Automatically opens the web server in your default browser.")
     def serve(host: str, port: int, reload: bool, open: bool) -> None:
         """Launches a local development server with the built app."""
-        from nova.internal.stack import start_stack
+        from nova.internal.stack import Stack
 
         builder.wrapped_build(include_hot_reload = reload)
-        asyncio.run(start_stack(host, port, reload, open, builder))
+        asyncio.run(Stack(host, port, reload, open, builder).start())
 
 else:
 

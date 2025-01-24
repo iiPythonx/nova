@@ -13,67 +13,82 @@ from websockets.http11 import Response
 from websockets.asyncio.server import serve
 from websockets.datastructures import Headers
 
-# from rich import print
-
+from .interface import Interface
 from .building import NovaBuilder
 from .hot_reload import attach_hot_reloading
 
 # Methods
-async def create_app(host: str, port: int, handler: typing.Callable, builder: NovaBuilder) -> None:
-    def process_request(connection, request):
-        if request.path != "/_nova":
-            destination_file = builder.destination / Path(request.path[1:])
-            if not destination_file.is_relative_to(builder.destination):
-                return connection.respond(HTTPStatus.UNAUTHORIZED, "Nuh uh.\n")
+class Stack:
+    def __init__(self, host: str, port: int, auto_reload: bool, auto_open: bool, build_instance: NovaBuilder) -> None:
+        self.host, self.port = host, port
+        self.auto_reload, self.auto_open = auto_reload, auto_open
+        self.build_instance = build_instance
 
-            elif destination_file.is_dir():
-                destination_file = destination_file / "index.html"
+        # Create a shared instance of the interface
+        self.interface = Interface()
 
-            final_path = destination_file.with_suffix(".html")
-            if not final_path.is_file():
-                final_path = destination_file
+    async def create_app(self, handler: typing.Callable) -> None:
+        def process_request(connection, request):
+            if request.path != "/_nova":
+                self.interface.update_log("Request", request.path)
+                destination_file = self.build_instance.destination / Path(request.path[1:])
+                if not destination_file.is_relative_to(self.build_instance.destination):
+                    return connection.respond(HTTPStatus.UNAUTHORIZED, "Nuh uh.\n")
 
-            if not final_path.is_file():
-                return connection.respond(HTTPStatus.NOT_FOUND, "File not found.\n")
+                elif destination_file.is_dir():
+                    destination_file = destination_file / "index.html"
 
-            content_type = mimetypes.guess_file_type(final_path)[0]
-            return Response(
-                HTTPStatus.OK, "OK",
-                Headers({"Content-Type": content_type} if content_type is not None else {}),
-                final_path.read_bytes()
-            )
+                final_path = destination_file.with_suffix(".html")
+                if not final_path.is_file():
+                    final_path = destination_file
 
-    try:
-        async with serve(handler, host, port, process_request = process_request) as ws:
-            await ws.serve_forever()
+                if not final_path.is_file():
+                    return connection.respond(HTTPStatus.NOT_FOUND, "File not found.\n")
 
-    except asyncio.CancelledError:
-        return
+                content_type = mimetypes.guess_file_type(final_path)[0]
+                return Response(
+                    HTTPStatus.OK, "OK",
+                    Headers({"Content-Type": content_type} if content_type is not None else {}),
+                    final_path.read_bytes()
+                )
 
-async def start_stack(host, port, reload, open, builder: NovaBuilder) -> None:
-    clients = set()
-    async def handler(websocket) -> None:
-        clients.add(websocket)
         try:
-            await websocket.wait_closed()
+            async with serve(handler, self.host, self.port, process_request = process_request) as ws:
+                await ws.serve_forever()
 
-        finally:
-            clients.remove(websocket)
+        except asyncio.CancelledError:
+            return
 
-    async def broadcast(data: typing.Any) -> None:
-        for client in clients:
-            await client.send(json.dumps(data))
+    async def start(self) -> None:
+        clients = set()
+        async def handler(websocket) -> None:
+            clients.add(websocket)
+            try:
+                self.interface.update_general(self.auto_reload, len(clients))
+                self.interface.update_log("Connection", "Client connected!")
+                await websocket.wait_closed()
 
-    async def kill() -> None:
-        task.cancel()
-        for client in clients.copy():
-            await client.close()
+            finally:
+                clients.remove(websocket)
+                self.interface.update_general(self.auto_reload, len(clients))
+                self.interface.update_log("Connection", "Client disconnected!")
 
-    if reload:
-        asyncio.create_task(attach_hot_reloading(builder, kill, broadcast))
+        async def broadcast(data: typing.Any) -> None:
+            self.interface.update_log("Broadcast", json.dumps(data))
+            for client in clients:
+                await client.send(json.dumps(data))
 
-    if open:
-        webbrowser.open(f"http://{'localhost' if host == '0.0.0.0' else host}:{port}", 2)
+        async def kill() -> None:
+            task.cancel()
+            for client in clients.copy():
+                await client.close()
 
-    task = asyncio.create_task(create_app(host, port, handler, builder))
-    await task
+        if self.auto_reload:
+            asyncio.create_task(attach_hot_reloading(self.build_instance, kill, broadcast, self.interface))
+
+        if self.auto_open:
+            webbrowser.open(f"http://{'localhost' if self.host == '0.0.0.0' else self.host}:{self.port}", 2)
+
+        self.interface.update_general(self.auto_reload, 0)
+        task = asyncio.create_task(self.create_app(handler))
+        await task
