@@ -1,4 +1,5 @@
 # Copyright (c) 2025 iiPython
+# Design inspired by https://github.com/Lysagxra/BunkrDownloader.
 
 # Modules
 from typing import Optional
@@ -40,8 +41,10 @@ class Interface:
         return layout
 
     def _render_table(self) -> Panel:
-        table = Table(show_edge = False, box = SIMPLE)
-        [table.add_column(f"[light_cyan3]{column}", style = "pale_turquoise4") for column in ["Time", "Event", "Message"]]
+        table = Table(show_edge = False, box = SIMPLE)  
+        table.add_column(f"[light_cyan3]Time", style = "pale_turquoise4", width = 15)
+        table.add_column(f"[light_cyan3]Event", style = "pale_turquoise4", width = 20)
+        table.add_column(f"[light_cyan3]Message", style = "pale_turquoise4")
         for row in self.log_buffer:
             table.add_row(*row)
 
@@ -63,21 +66,21 @@ class Interface:
         dist: Optional[str] = None,
         error: Optional[Exception] = None
     ) -> Panel:
-        if path is None:
+        if error is not None:
+            content = Group(
+                "[red underline]Jinja2 Exception[/]",
+                str(error)
+            )
+
+        elif path is None:
             content = "[red]Nothing has been generated yet.[/]"
 
-        elif error is None:
+        else:
             content = Group(
                 f"[light_cyan3]{path}",
                 f"[light_cyan3]  → Render Time: {time}ms",
                 f"[light_cyan3]  → Reloaded: {' '.join(reloads or [])}",
                 f"\n[light_cyan3]Looking for changes in [yellow underline]{src}[/], writing to [purple underline]{dist}[/]."
-            )
-
-        else:
-            content = Group(
-                "[red underline]Jinja2 Exception[/]",
-                str(error)
             )
 
         return Panel(Padding(content, (1, 1)), title = "Last change", title_align = "left", border_style = "cyan")

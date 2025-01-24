@@ -46,34 +46,33 @@ class NovaBuilder:
         self,
         include_hot_reload: bool = False
     ) -> None:
-        for path, _, files in os.walk(self.source):
-            for file in files:
-                if file.split(".")[-1] not in ["j2", "jinja2", "jinja"]:
-                    continue
+        for file in self.source.rglob("*"):
+            if not (file.is_file() and file.suffix in [".j2", ".jinja", ".jinja2"]):
+                continue
 
-                relative_location = (Path(path) / Path(file)).relative_to(self.source)
-                destination_location = self.destination / relative_location.with_suffix(".html")
-                destination_location.parent.mkdir(exist_ok = True)
+            relative_location = file.relative_to(self.source)
+            destination_location = self.destination / relative_location.with_suffix(".html")
+            destination_location.parent.mkdir(exist_ok = True)
 
-                # Handle hot-reloading (if enabled)
-                template_html = self.environ.get_template(str(relative_location).replace(os.sep, "/")).render(
-                    relative = self.get_relative_location
-                )
-                if include_hot_reload:
-                    template_content = (self.source / relative_location).read_text("utf8")
+            # Handle hot-reloading (if enabled)
+            template_html = self.environ.get_template(str(relative_location).replace(os.sep, "/")).render(
+                relative = self.get_relative_location
+            )
+            if include_hot_reload:
+                template_content = (self.source / relative_location).read_text("utf8")
 
-                    # I said Nova was fast, never said it was W3C compliant
-                    template_html = template_html + "<script>(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener(\"message\",e=>{if(JSON.parse(e.data).includes(window.location.pathname))window.location.reload();});</script>"
+                # I said Nova was fast, never said it was W3C compliant
+                template_html = template_html + "<script>(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener(\"message\",e=>{if(JSON.parse(e.data).includes(window.location.pathname))window.location.reload();});</script>"
 
-                    # Additionally, check for any path references to keep track of
-                    self.build_dependencies[relative_location] = [
-                        str(relative_location.parent / Path(dep)) if dep.startswith(".") else dep.lstrip("/")
-                        for dep in re.findall(self._rgx_reference, template_content) + \
-                            re.findall(self._rgx_jinja, template_content)
-                    ]
+                # Additionally, check for any path references to keep track of
+                self.build_dependencies[relative_location] = [
+                    str(relative_location.parent / Path(dep)) if dep.startswith(".") else dep.lstrip("/")
+                    for dep in re.findall(self._rgx_reference, template_content) + \
+                        re.findall(self._rgx_jinja, template_content)
+                ]
 
-                # Finally, write it to the file
-                destination_location.write_text(template_html)
+            # Finally, write it to the file
+            destination_location.write_text(template_html)
 
         # Handle plugins
         for plugin in self.plugins.values():

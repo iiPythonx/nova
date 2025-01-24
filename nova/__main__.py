@@ -50,11 +50,11 @@ if config_file.is_file():
     @nova.command()
     def build() -> None:
         """Builds your app into servable HTML."""
-        builder.wrapped_build()
+        rcon.print(f"[green]\u2713 App built in [b]{builder.wrapped_build()}ms[/]![/]")
 
     @nova.command()
-    @click.option("--host", default = "127.0.0.1", help = "Gives socketify a specified host to run on, defaults to 127.0.0.1.")
-    @click.option("--port", default = 8000, type = int, help = "Gives socketify a specified port to bind to, defaults to 8000.")
+    @click.option("--host", default = "127.0.0.1", help = "Set the host to run on, defaults to 127.0.0.1.")
+    @click.option("--port", default = 8000, type = int, help = "Set the port to bind to, defaults to 8000.")
     @click.option("--reload", is_flag = True, help = "Enables Nova's hot-reloading feature.")
     @click.option("--open", is_flag = True, help = "Automatically opens the web server in your default browser.")
     def serve(host: str, port: int, reload: bool, open: bool) -> None:
