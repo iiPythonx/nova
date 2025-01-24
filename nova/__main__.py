@@ -1,7 +1,7 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
-import toml
+import tomllib
 import webbrowser
 from pathlib import Path
 
@@ -29,7 +29,7 @@ def version() -> None:
 # Initialization
 config_file = Path("nova.toml")
 if config_file.is_file():
-    config = toml.loads(config_file.read_text(encoding))
+    config = tomllib.loads(config_file.read_text(encoding))
 
     # Setup building
     mapping = config["project"]["mapping"].split(":")
@@ -97,7 +97,7 @@ else:
         check_path(Path(destination_location))
 
         # Write to file
-        config_file.write_text(toml.dumps({"project": {"mapping": f"{source_location}:{destination_location}"}}))
+        config_file.write_text(f"[project]\nmapping = \"{source_location}:{destination_location}\"")
 
 # Handle launching CLI
 if __name__ == "__main__":
