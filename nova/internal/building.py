@@ -63,7 +63,7 @@ class NovaBuilder:
                     template_content = (self.source / relative_location).read_text("utf8")
 
                     # I said Nova was fast, never said it was W3C compliant
-                    template_html = template_html + "<script>(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener(\"message\",e=>{if(JSON.parse(e.data).reload.includes(window.location.pathname))window.location.reload();});</script>"
+                    template_html = template_html + "<script>(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener(\"message\",e=>{if(JSON.parse(e.data).includes(window.location.pathname))window.location.reload();});</script>"
 
                     # Additionally, check for any path references to keep track of
                     self.build_dependencies[relative_location] = [

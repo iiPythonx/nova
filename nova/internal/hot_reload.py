@@ -1,18 +1,18 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
-import json
 import signal
+import typing
+import asyncio
 from pathlib import Path
-from threading import Thread, Event
+from threading import Event
 
-from watchfiles import watch
-from socketify import App, WebSocket, OpCode, CompressOptions
+from watchfiles import awatch
 
-from nova.internal.building import NovaBuilder
+from .building import NovaBuilder
 
 # Handle
-class FileAssociator():
+class FileAssociator:
     def __init__(self, builder: NovaBuilder) -> None:
         self.spa = builder.plugins.get("SPAPlugin")
         self.builder = builder
@@ -54,36 +54,27 @@ class FileAssociator():
         return reloads
 
 # Main attachment
-def attach_hot_reloading(
-    app: App,
-    builder: NovaBuilder
+async def attach_hot_reloading(
+    builder: NovaBuilder,
+    kill: typing.Callable,
+    broadcast: typing.Callable
 ) -> None:
-    associator = FileAssociator(builder)
-    async def connect_ws(ws: WebSocket) -> None: 
-        ws.subscribe("reload")
-
     stop_event = Event()
-    signal.signal(signal.SIGINT, lambda s, f: stop_event.set())
+    def handle_sigint(sig, frame):
+        stop_event.set()
+        asyncio.create_task(kill())
 
-    def hot_reload_thread(app: App) -> None:
-        for changes in watch(builder.source, stop_event = stop_event):
-            builder.wrapped_build(include_hot_reload = True)
+    signal.signal(signal.SIGINT, handle_sigint)
 
-            # Convert paths to relative
-            paths = []
-            for change in changes:
-                for page in associator.calculate_reloads(Path(change[1]).relative_to(builder.source)):
-                    clean = page.with_suffix("")
-                    paths.append(f"/{str(clean.parent) + '/' if str(clean.parent) != '.' else ''}{clean.name if clean.name != 'index' else ''}")
+    associator = FileAssociator(builder)
+    async for changes in awatch(builder.source, stop_event = stop_event):
+        builder.wrapped_build(include_hot_reload = True)
 
-            app.publish("reload", json.dumps({"reload": paths}), OpCode.TEXT)
+        # Convert paths to relative
+        paths = []
+        for change in changes:
+            for page in associator.calculate_reloads(Path(change[1]).relative_to(builder.source)):
+                clean = page.with_suffix("")
+                paths.append(f"/{str(clean.parent) + '/' if str(clean.parent) != '.' else ''}{clean.name if clean.name != 'index' else ''}")
 
-    Thread(target = hot_reload_thread, args = [app]).start()
-    app.ws(
-        "/_nova",
-        {
-            "compression": CompressOptions.SHARED_COMPRESSOR,
-            "max_payload_length": 16 * 1024 * 1024,
-            "open": connect_ws
-        }
-    )
+        await broadcast(paths)
