@@ -17,6 +17,9 @@ pip install git+https://github.com/iiPythonx/nova
 
 ### Usage
 
+> [!WARNING]
+> Nova 0.11 introduces some experimental features, you might experience bugs.
+
 To initialize a Nova project, just run `nova init` and follow the instructions:
 ```sh
 🚀 Nova 0.11.0 | Project Initialization
@@ -48,7 +51,6 @@ after_build_command = "bash /etc/somescript.sh"
 
 See [PLUGINS.md](./docs/PLUGINS.md).
 
-
 ### Troubleshooting
 
 Ensure you have uvloop installed:
@@ -56,3 +58,4 @@ Ensure you have uvloop installed:
 pacman -S libuv
 dnf install libuv
 apt install libuv1
+```
