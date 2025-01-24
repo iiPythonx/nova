@@ -10,6 +10,7 @@ from rich.console import Group
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
+from rich.padding import Padding
 from rich.layout import Layout
 
 from nova import __version__
@@ -40,38 +41,61 @@ class Interface:
 
     def _render_table(self) -> Panel:
         table = Table(show_edge = False, box = SIMPLE)
-        [table.add_column(column) for column in ["Time", "Event", "Message"]]
+        [table.add_column(f"[light_cyan3]{column}", style = "pale_turquoise4") for column in ["Time", "Event", "Message"]]
         for row in self.log_buffer:
             table.add_row(*row)
 
-        return Panel(table, title = "Logs")
+        return Panel(
+            Padding(table, (1, 1)),
+            title = "Logs",
+            title_align = "left",
+            subtitle = "(c) 2024-2025 iiPython",
+            subtitle_align = "right",
+            border_style = "cyan"
+        )
 
     def _render_change(
         self,
         path: Optional[str] = None,
         time: Optional[float] = None,
-        reloads: Optional[list[str]] = None
+        reloads: Optional[list[str]] = None,
+        src: Optional[str] = None,
+        dist: Optional[str] = None,
+        error: Optional[Exception] = None
     ) -> Panel:
-        table = Table(show_edge = False, show_header = False, box = SIMPLE)
-        table.add_row("File Path:", path or "N/A")
-        table.add_row("Render Time:", f"{time}ms" if time is not None else "N/A")
-        table.add_row("Reloaded:", " ".join(reloads) if reloads else "N/A")
-        return Panel(table, title = "Last change", title_align = "left")
+        if path is None:
+            content = "[red]Nothing has been generated yet.[/]"
+
+        elif error is None:
+            content = Group(
+                f"[light_cyan3]{path}",
+                f"[light_cyan3]  → Render Time: {time}ms",
+                f"[light_cyan3]  → Reloaded: {' '.join(reloads or [])}",
+                f"\n[light_cyan3]Looking for changes in [yellow underline]{src}[/], writing to [purple underline]{dist}[/]."
+            )
+
+        else:
+            content = Group(
+                "[red underline]Jinja2 Exception[/]",
+                str(error)
+            )
+
+        return Panel(Padding(content, (1, 1)), title = "Last change", title_align = "left", border_style = "cyan")
 
     def _render_general(self, reload: bool, connections: int) -> Panel:
         group = Group(
             f"Auto-reload is {'[green]enabled' if reload else '[red]disabled'}[/].",
-            f"Serving {connections} active connections."
+            f"Serving {connections} active connection{'s' if not connections or connections > 1 else ''}."
         )
-        return Panel(group, title = f"Nova v{__version__}", title_align = "left")
+        return Panel(Padding(group, (1, 1)), title = f"Nova v{__version__}", title_align = "left", border_style = "cyan")
 
     # Public methods
     def update_log(self, event: str, message: str) -> None:
         self.log_buffer.append((datetime.now().strftime("%H:%M:%S"), event, message))
         self._layout["bottom"].update(self._render_table())
 
-    def update_last_change(self, *args) -> None:
-        self._layout["right"].update(self._render_change(*args))
+    def update_last_change(self, *args, **kwargs) -> None:
+        self._layout["right"].update(self._render_change(*args, **kwargs))
 
     def update_general(self, reload: bool, connections: int) -> None:
         self._layout["left"].update(self._render_general(reload, connections))

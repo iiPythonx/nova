@@ -53,15 +53,13 @@ if config_file.is_file():
         builder.wrapped_build()
 
     @nova.command()
-    @click.option("--host", default = "0.0.0.0", help = "Gives socketify a specified host to run on, defaults to 0.0.0.0.")
+    @click.option("--host", default = "127.0.0.1", help = "Gives socketify a specified host to run on, defaults to 127.0.0.1.")
     @click.option("--port", default = 8000, type = int, help = "Gives socketify a specified port to bind to, defaults to 8000.")
     @click.option("--reload", is_flag = True, help = "Enables Nova's hot-reloading feature.")
     @click.option("--open", is_flag = True, help = "Automatically opens the web server in your default browser.")
     def serve(host: str, port: int, reload: bool, open: bool) -> None:
         """Launches a local development server with the built app."""
         from nova.internal.stack import Stack
-
-        builder.wrapped_build(include_hot_reload = reload)
         asyncio.run(Stack(host, port, reload, open, builder).start())
 
 else:
