@@ -42,9 +42,9 @@ class Interface:
 
     def _render_table(self) -> Panel:
         table = Table(show_edge = False, box = SIMPLE)  
-        table.add_column(f"[light_cyan3]Time", style = "pale_turquoise4", width = 15)
-        table.add_column(f"[light_cyan3]Event", style = "pale_turquoise4", width = 20)
-        table.add_column(f"[light_cyan3]Message", style = "pale_turquoise4")
+        table.add_column("[light_cyan3]Time", style = "pale_turquoise4", width = 15)
+        table.add_column("[light_cyan3]Event", style = "pale_turquoise4", width = 20)
+        table.add_column("[light_cyan3]Message", style = "pale_turquoise4")
         for row in self.log_buffer:
             table.add_row(*row)
 

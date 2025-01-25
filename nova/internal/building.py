@@ -9,7 +9,6 @@ import typing
 import subprocess
 from pathlib import Path
 
-from rich import print
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 # Main class
@@ -47,7 +46,7 @@ class NovaBuilder:
         include_hot_reload: bool = False
     ) -> None:
         for file in self.source.rglob("*"):
-            if not (file.is_file() and file.suffix in [".j2", ".jinja", ".jinja2"]):
+            if not (file.is_file() and file.suffix in [".html", ".j2", ".jinja", ".jinja2"]):
                 continue
 
             relative_location = file.relative_to(self.source)
