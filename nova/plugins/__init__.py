@@ -92,7 +92,7 @@ def fetch_plugin(plugin_name: str) -> object:
 class StaticFileBasedBuilder():
     def __init__(
         self,
-        file_associations: tuple[str],
+        file_associations: tuple[str, ...],
         destination_extension: str,
         default_mapping: str,
         build_binaries: dict[str, str],
