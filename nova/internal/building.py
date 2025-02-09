@@ -11,12 +11,16 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+# Handle loading plugins in the correct order
+plugin_load_order = ["static", "sass", "typescript", "spa", "nonce", "minify"]
+
 # Main class
 class NovaBuilder:
-    def __init__(self, source: Path, destination: Path, after_build_command: typing.Optional[str]) -> None:
+    def __init__(self, source: Path, destination: Path, build_exclude: list[str], after_build_command: typing.Optional[str]) -> None:
         self.source, self.destination = source, destination
         self.destination.mkdir(exist_ok = True)
 
+        self.build_exclude = build_exclude
         self.after_build_command = after_build_command if (after_build_command or "").strip() else None
 
         # Create Jinja2 environment
@@ -46,7 +50,11 @@ class NovaBuilder:
         include_hot_reload: bool = False
     ) -> None:
         for file in self.source.rglob("*"):
-            if not (file.is_file() and file.suffix in [".html", ".j2", ".jinja", ".jinja2"]):
+            if not (
+                file.is_file() and
+                file.suffix in [".html", ".j2", ".jinja", ".jinja2"] and
+                file.relative_to(self.source).parts[0] not in self.build_exclude
+            ):
                 continue
 
             relative_location = file.relative_to(self.source)
@@ -61,7 +69,7 @@ class NovaBuilder:
                 template_content = (self.source / relative_location).read_text("utf8")
 
                 # I said Nova was fast, never said it was W3C compliant
-                template_html = template_html + "<script>(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener(\"message\",e=>{if(JSON.parse(e.data).includes(window.location.pathname))window.location.reload();});</script>"
+                template_html += "<script>(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener(\"message\",e=>{if(JSON.parse(e.data).includes(window.location.pathname))window.location.reload();});</script>"
 
                 # Additionally, check for any path references to keep track of
                 self.build_dependencies[relative_location] = [
@@ -74,7 +82,10 @@ class NovaBuilder:
             destination_location.write_text(template_html)
 
         # Handle plugins
-        for plugin in self.plugins.values():
+        for plugin, _ in sorted([
+            (plugin, plugin_load_order.index(name.lower().removesuffix("plugin")))
+            for name, plugin in self.plugins.items()
+        ], key = lambda p: p[1]):
             plugin.on_build(include_hot_reload)
 
         # Handle running additional commands

@@ -36,6 +36,7 @@ if config_file.is_file():
     builder = NovaBuilder(
         Path(mapping[0]).absolute(),
         Path(mapping[1]).absolute(),
+        config["project"].get("build-exclude") or [],
         config["project"].get("after_build_command")
     )
 
