@@ -4,7 +4,7 @@
 import shutil
 from pathlib import Path
 
-from selectolax.lexbor import LexborHTMLParser
+from bs4 import BeautifulSoup
 
 from . import encoding
 from nova.internal.building import NovaBuilder
@@ -28,11 +28,6 @@ class SPAPlugin:
 
     def on_build(self, dev: bool) -> None:
         files = [file for file in self.source.rglob("*") if file.is_file()]
-        if files == self._cached_files:
-            return
-
-        self._cached_files = files
-
         page_list = ", ".join([
             f"\"/{file.relative_to(self.source).with_suffix('') if file.name != 'index.html' else ''}\""
             for file in files
@@ -42,10 +37,10 @@ class SPAPlugin:
             js_location = self.destination / "js/spa.js"
             js_location.parent.mkdir(parents = True, exist_ok = True)
             js_location.write_text(snippet)
-            snippet = "<script src = \"/js/spa.js\" async defer>"
+            snippet = {"src": "/js/spa.js", "async": "", "defer": ""}
 
         else:
-            snippet = f"<script>{snippet}</script>"
+            snippet = {"string": snippet}
 
         # Handle iteration
         for file in self.source.rglob("*"):
@@ -57,11 +52,11 @@ class SPAPlugin:
 
             # Add JS snippet
             shutil.copy(file, new_location)
-            root = LexborHTMLParser(new_location.read_text(encoding))
-            (root.css_first("body") or root).insert_child(snippet)
-            new_location.write_text(root.html)
+            root = BeautifulSoup(new_location.read_text(), "lxml")
+            (root.find("body") or root).append(root.new_tag("script", **snippet))  # type: ignore
+            new_location.write_text(str(root))
 
             # Strip out everything except for the content
-            target = LexborHTMLParser(file.read_text(encoding)).css_first(self.target)
+            target = BeautifulSoup(file.read_text(encoding), "lxml").select_one(self.target)
             if target is not None:
-                file.write_text(target.html)
+                file.write_bytes(target.encode_contents())

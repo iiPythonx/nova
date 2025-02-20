@@ -35,11 +35,11 @@ available_plugins = {
     },
     "spa": {
         "module": plugin_load_callback(".plugin_spa", "SPAPlugin"),
-        "requirements": ["selectolax"]
+        "requirements": ["beautifulsoup4"]
     },
     "nonce": {
         "module": plugin_load_callback(".plugin_nonce", "NoncePlugin"),
-        "requirements": ["selectolax"]
+        "requirements": ["beautifulsoup4"]
     },
     "minify": {
         "module": plugin_load_callback(".plugin_minify", "MinifyPlugin"),
