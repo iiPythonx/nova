@@ -73,13 +73,13 @@ class MinifyPlugin:
 
     # Minification steps
     def _minify_js_native(self, path: Path) -> None:
-        path.write_text(rjsmin.jsmin(path.read_text(encoding)))
+        path.write_text(rjsmin.jsmin(path.read_text(encoding)))  # type: ignore
 
     def _minify_js_external(self, path: Path) -> None:
         subprocess.run(["uglifyjs", path, "--rename", "--toplevel", "-c", "-m", "-o", path])
 
     def _minify_css_native(self, path: Path) -> None:
-        path.write_text(rcssmin.cssmin(path.read_text(encoding)))
+        path.write_text(rcssmin.cssmin(path.read_text(encoding)))  # type: ignore
 
     def _minify_css_external(self, path: Path) -> None:
         subprocess.run(["csso", "-i", path, "-o", path])

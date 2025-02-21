@@ -19,8 +19,11 @@ mapping = "pages:."
 # Target element the JS will swap out
 target = ".any_css_selector" 
 
-# Skip embedding the JS into the file and just add a script-src?
-external = true
+# Skip embedding the JS into the file and just add a script-src? (optional)
+external = false
+
+# Skip adding a script altogether, allowing you to make your own? (optional)
+noscript = false
 ```
 
 #### Plugins / Sass

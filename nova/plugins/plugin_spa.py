@@ -17,7 +17,9 @@ class SPAPlugin:
     def __init__(self, builder: NovaBuilder, config: dict) -> None:
         mapping = config["mapping"].split(":")
         self.config, self.target, self.external, (self.source, self.destination) = \
-            config, config["target"], config["external"], mapping
+            config, config["target"], config.get("external"), mapping
+
+        self.write = not config.get("noscript")
 
         # Handle remapping
         self.source = builder.destination / self.source
@@ -33,7 +35,7 @@ class SPAPlugin:
             for file in files
         ])
         snippet = template_js % (page_list, self.target, self.config["title"], self.config["title_sep"])
-        if self.external:
+        if self.external and self.write:
             js_location = self.destination / "js/spa.js"
             js_location.parent.mkdir(parents = True, exist_ok = True)
             js_location.write_text(snippet)
@@ -52,9 +54,10 @@ class SPAPlugin:
 
             # Add JS snippet
             shutil.copy(file, new_location)
-            root = BeautifulSoup(new_location.read_text(), "lxml")
-            (root.find("body") or root).append(root.new_tag("script", **snippet))  # type: ignore
-            new_location.write_text(str(root))
+            if self.write:
+                root = BeautifulSoup(new_location.read_text(), "lxml")
+                (root.find("body") or root).append(root.new_tag("script", **snippet))  # type: ignore
+                new_location.write_text(str(root))
 
             # Strip out everything except for the content
             target = BeautifulSoup(file.read_text(encoding), "lxml").select_one(self.target)
