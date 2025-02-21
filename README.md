@@ -51,6 +51,11 @@ after_build_command = "bash /etc/somescript.sh"
 
 See [PLUGINS.md](./docs/PLUGINS.md).
 
+### Built-in Jinja variables
+
+- `GIT_HASH` - The full Git SHA of the current repo, updated once per build.
+    - If git is not installed, or no `.git` folder is found, `GIT_HASH` will be a blank string.
+
 ### Troubleshooting
 
 Ensure you have uvloop installed:

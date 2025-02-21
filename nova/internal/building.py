@@ -5,6 +5,7 @@ import os
 import re
 import time
 import shlex
+import shutil
 import typing
 import subprocess
 from pathlib import Path
@@ -12,7 +13,11 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 # Handle loading plugins in the correct order
-plugin_load_order = ["static", "sass", "typescript", "spa", "nonce", "minify"]
+LOAD_ORDER = ["static", "sass", "typescript", "spa", "nonce", "minify"]
+
+GIT_HASH = ""
+if shutil.which("git") and (Path.cwd() / ".git").is_dir():
+    GIT_HASH = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode()[:-1]
 
 # Main class
 class NovaBuilder:
@@ -62,9 +67,7 @@ class NovaBuilder:
             destination_location.parent.mkdir(exist_ok = True)
 
             # Handle hot-reloading (if enabled)
-            template_html = self.environ.get_template(str(relative_location).replace(os.sep, "/")).render(
-                relative = self.get_relative_location
-            )
+            template_html = self.environ.get_template(str(relative_location).replace(os.sep, "/")).render(git_hash = GIT_HASH)
             if include_hot_reload:
                 template_content = (self.source / relative_location).read_text("utf8")
 
@@ -83,7 +86,7 @@ class NovaBuilder:
 
         # Handle plugins
         for plugin, _ in sorted([
-            (plugin, plugin_load_order.index(name.lower().removesuffix("plugin")))
+            (plugin, LOAD_ORDER.index(name.lower().removesuffix("plugin")))
             for name, plugin in self.plugins.items()
         ], key = lambda p: p[1]):
             plugin.on_build(include_hot_reload)
@@ -94,12 +97,3 @@ class NovaBuilder:
 
     def register_file_associations(self, extension: str, callback: typing.Callable) -> None:
         self.file_assocs[extension] = callback
-
-    def get_relative_location(self, path: Path | str) -> str:
-        if isinstance(path, str):
-            path = Path(path)
-
-        if path.suffix in self.file_assocs:
-            return self.file_assocs[path.suffix](path)
-        
-        return str(path)
