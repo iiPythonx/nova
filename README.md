@@ -1,8 +1,10 @@
-# Nova
+<div align = "center">
+
+![Nova Loga](docs/nova.png)
 
 A site building framework for people who like to keep it simple.
 
----
+</div>
 
 ### Installation
 
