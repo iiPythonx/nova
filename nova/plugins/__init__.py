@@ -1,9 +1,9 @@
-# Copyright (c) 2024 iiPython
+# Copyright (c) 2024-2025 iiPython
 
 # Modules
 import os
 import typing
-import platform
+# import platform
 import subprocess
 from shutil import which
 from pathlib import Path
@@ -95,7 +95,6 @@ class StaticFileBasedBuilder():
         file_associations: tuple[str, ...],
         destination_extension: str,
         default_mapping: str,
-        build_binaries: dict[str, str],
         builder: NovaBuilder,
         config: dict
     ) -> None:
@@ -112,10 +111,6 @@ class StaticFileBasedBuilder():
         # Adjust the source and destination to match the mapping
         self.source = self.source / self.mapping[0]
         self.destination = self.destination / self.mapping[1]
-
-        # Locate the appropriate binary
-        system = platform.system().lower()
-        self.build_binary = Path(__file__).parent / "binaries" / system / build_binaries[system]
 
     def patch_filename(self, filename: Path) -> str:
         if filename.parents[-2].name != self.mapping[0]:  # Not our problem

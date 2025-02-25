@@ -22,7 +22,7 @@ pip install git+https://github.com/iiPythonx/nova
 
 To initialize a Nova project, just run `nova init` and follow the instructions:
 ```sh
-🚀 Nova 0.12.0 | Project Initialization
+🚀 Nova 0.13.0 | Project Initialization
 Source location (default: src): src/
 Destination location (default: dist): dist/
 ```

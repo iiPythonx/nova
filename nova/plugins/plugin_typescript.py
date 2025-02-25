@@ -4,6 +4,7 @@
 import subprocess
 
 from . import StaticFileBasedBuilder
+from .binaries import fetch_binary
 
 # Handle plugin
 class TypescriptPlugin(StaticFileBasedBuilder):
@@ -12,9 +13,9 @@ class TypescriptPlugin(StaticFileBasedBuilder):
             (".ts",),
             ".js",
             "ts:js",
-            {"linux": "swc", "windows": "swc.exe"},
             *args
         )
+        self.build_binary = fetch_binary("swc")
 
     def on_build(self, dev: bool) -> None:
         for file in self.source.rglob("*"):

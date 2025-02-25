@@ -2,7 +2,9 @@
 
 # Modules
 import subprocess
+
 from . import StaticFileBasedBuilder
+from .binaries import fetch_binary
 
 # Handle plugin
 class SassPlugin(StaticFileBasedBuilder):
@@ -11,9 +13,9 @@ class SassPlugin(StaticFileBasedBuilder):
             (".scss", ".sass"),
             ".css",
             "scss:css",
-            {"linux": "sass", "windows": "sass.bat"},
             *args
         )
+        self.build_binary = fetch_binary("sass")
 
     def on_build(self, dev: bool) -> None:
         subprocess.run([
