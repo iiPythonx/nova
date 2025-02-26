@@ -4,6 +4,7 @@
 import tomllib
 import asyncio
 from pathlib import Path
+import webbrowser
 
 import click
 from rich.console import Console
@@ -25,6 +26,11 @@ def nova() -> None:
 def version() -> None:
     """Displays the current Nova CLI version."""
     rcon.print(f"[yellow bold]{version_string}[/]")
+
+@nova.command()
+def news() -> None:
+    """Show the Nova changelog in your browser."""
+    webbrowser.open("https://github.com/iiPythonx/nova/releases/latest", 2)
 
 # Initialization
 config_file = Path("nova.toml")

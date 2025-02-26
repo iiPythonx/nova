@@ -39,6 +39,15 @@ Run `nova serve --reload` to get a hot-reloading capable web server.
 
 All project configuration should be put inside of `nova.toml` in your working directory.
 
+##### Flags
+
+```toml
+# optional
+[flags]
+reload = true
+open = true
+```
+
 ##### Project
 
 ```toml
