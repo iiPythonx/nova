@@ -40,6 +40,45 @@ BINARY_URLS = {
             "A64": "https://github.com/sass/dart-sass/releases/download/1.85.1/dart-sass-1.85.1-windows-arm64.zip",
             "F": "dart-sass/sass.bat"
         }
+    },
+    "minhtml": {
+        "linux": {
+            "64": "https://github.com/wilsonzlin/minify-html/releases/download/v0.15.0/minhtml-0.15.0-x86_64-unknown-linux-gnu",
+            "A64": "https://github.com/wilsonzlin/minify-html/releases/download/v0.15.0/minhtml-0.15.0-aarch64-unknown-linux-gnu"
+        },
+        "windows": {
+            "64": "https://github.com/wilsonzlin/minify-html/releases/download/v0.15.0/minhtml-0.15.0-x86_64-pc-windows-msvc.exe"
+        }
+    },
+    "bun": {
+        "linux": {
+            "64": "https://github.com/oven-sh/bun/releases/download/bun-v1.2.3/bun-linux-x64.zip",
+            "F": "bun-linux-x64/bun"
+        },
+        "windows": {
+            "64": "https://github.com/oven-sh/bun/releases/download/bun-v1.2.3/bun-windows-x64.zip",
+            "F": "bun-windows-x64/bun.exe"
+        }
+    },
+    "uglifyjs": {
+        "linux": {
+            "64": "https://github.com/mishoo/UglifyJS/archive/refs/tags/v3.19.3.zip",
+            "F": "UglifyJS-3.19.3/bin/uglifyjs"
+        },
+        "windows": {
+            "64": "https://github.com/mishoo/UglifyJS/archive/refs/tags/v3.19.3.zip",
+            "F": "UglifyJS-3.19.3/bin/uglifyjs"
+        }
+    },
+    "csso": {
+        "linux": {
+            "64": "https://github.com/css/csso-cli/archive/refs/tags/v4.0.2.zip",
+            "F": "csso-cli-4.0.2/bin/csso"
+        },
+        "windows": {
+            "64": "https://github.com/css/csso-cli/archive/refs/tags/v4.0.2.zip",
+            "F": "csso-cli-4.0.2/bin/csso"
+        }
     }
 }
 
@@ -66,7 +105,7 @@ def download_asset(name: str) -> None:
     with urlopen(download_url) as response:
         with file.open("wb") as output:
             with Progress() as progress:
-                task = progress.add_task(f"[cyan]Downloading {name}...", total = int(response.getheader("Content-Length")))
+                task = progress.add_task(f"[cyan]Downloading {name}...", total = int(response.getheader("Content-Length") or 0))
                 for chunk in iter(lambda: response.read(1024), b""):
                     output.write(chunk)
                     progress.update(task, advance = len(chunk))

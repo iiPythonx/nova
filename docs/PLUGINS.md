@@ -43,7 +43,6 @@ See [the source code](https://github.com/iiPythonx/nova/blob/main/nova/plugins/p
 #### Plugins / Minification
 
 This plugin adds basic HTML, CSS, & JS minification.  
-Note that `minify.options` only applies to HTML minification; see [the minify-html documentation](https://docs.rs/minify-html/latest/minify_html/struct.Cfg.html) for configuration options.
 
 | Language |  Setting |     Tool    | Performance | Minification |
 |:--------:|:--------:|:-----------:|:-----------:|:------------:|
@@ -56,10 +55,6 @@ Note that `minify.options` only applies to HTML minification; see [the minify-ht
 ```toml
 [plugins.minify]
 suffixes = [".html", ".js"]
-
-[plugins.minify.options]
-keep_comments = true
-keep_closing_tags = false
 
 [plugins.minify.methods]
 js = "external"

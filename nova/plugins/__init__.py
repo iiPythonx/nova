@@ -3,7 +3,6 @@
 # Modules
 import os
 import typing
-# import platform
 import subprocess
 from shutil import which
 from pathlib import Path
@@ -43,7 +42,7 @@ available_plugins = {
     },
     "minify": {
         "module": plugin_load_callback(".plugin_minify", "MinifyPlugin"),
-        "requirements": ["minify-html"]
+        "requirements": []
     }
 }
 
@@ -89,7 +88,7 @@ def fetch_plugin(plugin_name: str) -> object:
             exit(1)
 
 # Helping class for repetitive external tool plugins
-class StaticFileBasedBuilder():
+class StaticFileBasedBuilder:
     def __init__(
         self,
         file_associations: tuple[str, ...],
