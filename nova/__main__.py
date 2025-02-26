@@ -42,8 +42,8 @@ if config_file.is_file():
 
     # Initialize plugins
     active_plugins = [fetch_plugin("static")(builder, {})]  # type: ignore
-    for plugin, config in config.get("plugins", {}).items():
-        active_plugins.append(fetch_plugin(plugin)(builder, config))  # type: ignore
+    for plugin, plugin_config in config.get("plugins", {}).items():
+        active_plugins.append(fetch_plugin(plugin)(builder, plugin_config))  # type: ignore
 
     builder.register_plugins(active_plugins)
 
@@ -61,7 +61,15 @@ if config_file.is_file():
     def serve(host: str, port: int, reload: bool, open: bool) -> None:
         """Launches a local development server with the built app."""
         from nova.internal.stack import Stack
-        asyncio.run(Stack(host, port, reload, open, builder).start())
+
+        flags = config.get("flags", {})
+        asyncio.run(Stack(
+            host,
+            port,
+            reload or flags.get("reload"),
+            open or flags.get("open"),
+            builder
+        ).start())
 
 else:
 
