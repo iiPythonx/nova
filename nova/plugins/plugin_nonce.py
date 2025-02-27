@@ -3,7 +3,7 @@
 # Modules
 from bs4 import BeautifulSoup
 
-from . import encoding
+from nova import __encoding__
 from nova.internal.building import NovaBuilder
 
 # Handle plugin
@@ -20,7 +20,7 @@ class NoncePlugin:
             if file.suffix != ".html":
                 continue
 
-            root = BeautifulSoup(file.read_text(encoding), "lxml")
+            root = BeautifulSoup(file.read_text(__encoding__), "lxml")
             for element in root.select("script, link, style"):
                 if element.name == "link" and element.get("rel") != ["stylesheet"]:
                     continue

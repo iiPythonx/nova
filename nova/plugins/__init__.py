@@ -12,9 +12,6 @@ from rich.console import Console
 
 from nova.internal.building import NovaBuilder
 
-# Plugin specified encoding
-encoding = "utf8"
-
 # Handle plugin initialization
 def plugin_load_callback(name: str, class_name: str) -> typing.Callable:
     def load_plugin() -> None:
@@ -42,7 +39,6 @@ available_plugins = {
     },
     "minify": {
         "module": plugin_load_callback(".plugin_minify", "MinifyPlugin"),
-        "requirements": []
     }
 }
 

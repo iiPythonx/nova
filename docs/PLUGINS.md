@@ -43,22 +43,11 @@ See [the source code](https://github.com/iiPythonx/nova/blob/main/nova/plugins/p
 #### Plugins / Minification
 
 This plugin adds basic HTML, CSS, & JS minification.  
-
-| Language |  Setting |     Tool    | Performance | Minification |
-|:--------:|:--------:|:-----------:|:-----------:|:------------:|
-|   HTML   |    N/A   | [minify-html](https://github.com/wilsonzlin/minify-html) |     good    |     good     |
-|    JS    | external |  [uglifyjs](https://github.com/mishoo/UglifyJS)  |      ok     |     great    |
-|    JS    |  native  |    [rjsmin](https://github.com/ndparker/rjsmin)   |    great    |      ok      |
-|    CSS   | external |     [csso](https://github.com/css/csso)    |      ok     |     great    |
-|    CSS   |  native  |   [rcssmin](https://github.com/ndparker/rcssmin)   |    great    |      ok      |
+HTML is minified with [minify-html](https://github.com/wilsonzlin/minify-html), JS with [uglifyjs](https://github.com/mishoo/UglifyJS), and CSS with [csso](https://github.com/css/csso).
 
 ```toml
 [plugins.minify]
 suffixes = [".html", ".js"]
-
-[plugins.minify.methods]
-js = "external"
-css = "native"
 ```
 
 #### Plugins / Nonce

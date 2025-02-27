@@ -4,13 +4,12 @@
 import tomllib
 import asyncio
 from pathlib import Path
-import webbrowser
 
 import click
 from rich.console import Console
 
-from . import __version__
-from .plugins import fetch_plugin, encoding
+from . import __version__, __encoding__
+from .plugins import fetch_plugin
 from .internal.building import NovaBuilder
 
 # CLI
@@ -27,15 +26,10 @@ def version() -> None:
     """Displays the current Nova CLI version."""
     rcon.print(f"[yellow bold]{version_string}[/]")
 
-@nova.command()
-def news() -> None:
-    """Show the Nova changelog in your browser."""
-    webbrowser.open("https://github.com/iiPythonx/nova/releases/latest", 2)
-
 # Initialization
 config_file = Path("nova.toml")
 if config_file.is_file():
-    config = tomllib.loads(config_file.read_text(encoding))
+    config = tomllib.loads(config_file.read_text(__encoding__))
 
     # Setup building
     mapping = config["project"]["mapping"].split(":")

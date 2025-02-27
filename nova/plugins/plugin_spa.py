@@ -6,11 +6,11 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from . import encoding
+from nova import __encoding__
 from nova.internal.building import NovaBuilder
 
 # Initialization
-template_js = (Path(__file__).parents[1] / "assets/spa.js").read_text(encoding)
+template_js = (Path(__file__).parents[1] / "assets/spa.js").read_text(__encoding__)
 
 # Handle plugin
 class SPAPlugin:
@@ -60,6 +60,6 @@ class SPAPlugin:
                 new_location.write_text(str(root))
 
             # Strip out everything except for the content
-            target = BeautifulSoup(file.read_text(encoding), "lxml").select_one(self.target)
+            target = BeautifulSoup(file.read_text(__encoding__), "lxml").select_one(self.target)
             if target is not None:
                 file.write_bytes(target.encode_contents())
