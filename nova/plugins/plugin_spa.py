@@ -6,24 +6,26 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
+from . import Plugin
 from nova import __encoding__
-from nova.internal.building import NovaBuilder
 
 # Initialization
 template_js = (Path(__file__).parents[1] / "assets/spa.js").read_text(__encoding__)
 
 # Handle plugin
-class SPAPlugin:
-    def __init__(self, builder: NovaBuilder, config: dict) -> None:
-        mapping = config["mapping"].split(":")
-        self.config, self.target, self.external, (self.source, self.destination) = \
-            config, config["target"], config.get("external"), mapping
+class SPAPlugin(Plugin):
+    def __init__(self, *args) -> None:
+        super().__init__(*args)
 
-        self.write = not config.get("noscript")
+        mapping = self.config["mapping"].split(":")
+        self.config, self.target, self.external, (self.source, self.destination) = \
+            self.config, self.config["target"], self.config.get("external"), mapping
+
+        self.write = not self.config.get("noscript")
 
         # Handle remapping
-        self.source = builder.destination / self.source
-        self.destination = builder.destination / self.destination
+        self.source = self.builder.destination / self.source
+        self.destination = self.builder.destination / self.destination
 
         # Handle caching
         self._cached_files = None
@@ -43,6 +45,8 @@ class SPAPlugin:
 
         else:
             snippet = {"string": snippet}
+
+        self._push_log(3, "+", f"Pages: {page_list}")
 
         # Handle iteration
         for file in self.source.rglob("*"):

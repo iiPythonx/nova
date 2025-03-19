@@ -55,7 +55,7 @@ open = true
 mapping = "source_path:destination_path"
 
 # optional
-after_build_command = "bash /etc/somescript.sh"
+after-build = "bash /etc/somescript.sh"
 ```
 
 ##### Plugins

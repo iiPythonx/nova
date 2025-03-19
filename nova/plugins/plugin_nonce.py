@@ -4,13 +4,14 @@
 from bs4 import BeautifulSoup
 
 from nova import __encoding__
-from nova.internal.building import NovaBuilder
+from . import Plugin
 
 # Handle plugin
-class NoncePlugin:
-    def __init__(self, builder: NovaBuilder, config: dict) -> None:
-        self.nonce = config["nonce"]
-        self.destination = builder.destination
+class NoncePlugin(Plugin):
+    def __init__(self, *args) -> None:
+        super().__init__(*args)
+        self.nonce = self.config["nonce"]
+        self.destination = self.builder.destination
 
     def on_build(self, dev: bool) -> None:
         if dev:

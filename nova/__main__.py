@@ -33,25 +33,28 @@ if config_file.is_file():
 
     # Setup building
     mapping = config["project"]["mapping"].split(":")
-    builder = NovaBuilder(
-        Path(mapping[0]).absolute(),
-        Path(mapping[1]).absolute(),
-        config["project"].get("build-exclude") or [],
-        config["project"].get("after_build_command")
-    )
+    def create_builder(debug: bool) -> NovaBuilder:
+        builder = NovaBuilder(
+            Path(mapping[0]).absolute(),
+            Path(mapping[1]).absolute(),
+            debug,
+            config["project"].get("build-exclude") or [],
+            config["project"].get("after-build")
+        )
 
-    # Initialize plugins
-    active_plugins = [fetch_plugin("static")(builder, {})]  # type: ignore
-    for plugin, plugin_config in config.get("plugins", {}).items():
-        active_plugins.append(fetch_plugin(plugin)(builder, plugin_config))  # type: ignore
+        # Initialize plugins
+        active_plugins = [fetch_plugin("static")(builder, {})]  # type: ignore
+        for plugin, plugin_config in config.get("plugins", {}).items():
+            active_plugins.append(fetch_plugin(plugin)(builder, plugin_config))  # type: ignore
 
-    builder.register_plugins(active_plugins)
+        builder.register_plugins(active_plugins)
+        return builder
 
     # Link up config-needing commands
     @nova.command()
     def build() -> None:
         """Builds your app into servable HTML."""
-        rcon.print(f"[green]\u2713 App built in [b]{builder.wrapped_build()}ms[/]![/]")
+        rcon.print(f"[green]\u2713 App built in [b]{create_builder(False).wrapped_build()}ms[/]![/]")
 
     @nova.command()
     @click.option("--host", default = "127.0.0.1", help = "Set the host to run on, defaults to 127.0.0.1.")
@@ -66,9 +69,8 @@ if config_file.is_file():
         asyncio.run(Stack(
             host,
             port,
-            reload or flags.get("reload"),
             open or flags.get("open"),
-            builder
+            create_builder(reload or flags.get("reload"))
         ).start())
 
 else:

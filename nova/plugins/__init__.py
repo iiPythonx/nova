@@ -10,6 +10,7 @@ from importlib import import_module
 
 from rich.console import Console
 
+from nova import interface
 from nova.internal.building import NovaBuilder
 
 # Handle plugin initialization
@@ -83,16 +84,27 @@ def fetch_plugin(plugin_name: str) -> object:
             rcon.print(f"Running '{installation_command}' should install them on your system.")
             exit(1)
 
-# Helping class for repetitive external tool plugins
-class StaticFileBasedBuilder:
+class Plugin:
+    def __init__(self, builder: NovaBuilder, config: dict) -> None:
+        self.config, self.builder = config, builder
+
+    def _push_log(self, indent: int, operand: str, text: str) -> None:
+        if self.builder.debug:
+            return
+
+        print(f"\033[90m{' ' * indent}{operand} {text}")
+
+class StaticFileBasedBuilder(Plugin):
     def __init__(
         self,
+        builder: NovaBuilder,
+        config: dict,
         file_associations: tuple[str, ...],
         destination_extension: str,
         default_mapping: str,
-        builder: NovaBuilder,
-        config: dict
     ) -> None:
+        super().__init__(builder, config)
+
         self.destination_extension = destination_extension
         self.source, self.destination = builder.source, builder.destination
 

@@ -8,12 +8,12 @@ from .binaries import fetch_binary
 
 # Handle plugin
 class TypescriptPlugin(StaticFileBasedBuilder):
-    def __init__(self, *args) -> None:
+    def __init__(self, config, builder) -> None:
         super().__init__(
+            config, builder,
             (".ts",),
             ".js",
             "ts:js",
-            *args
         )
         self.build_binary = fetch_binary("swc")
 

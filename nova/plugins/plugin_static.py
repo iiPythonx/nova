@@ -6,13 +6,14 @@ import shutil
 import atexit
 from pathlib import Path
 
-from nova.internal.building import NovaBuilder
+from . import Plugin
 
 # Handle plugin
-class StaticPlugin:
-    def __init__(self, builder: NovaBuilder, config: dict) -> None:
+class StaticPlugin(Plugin):
+    def __init__(self, *args) -> None:
+        super().__init__(*args)
         self.source, self.destination = \
-            builder.source / "static", builder.destination
+            self.builder.source / "static", self.builder.destination
 
         # Hooks
         atexit.register(self.ensure_symlink_removal)

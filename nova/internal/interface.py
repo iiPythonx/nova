@@ -21,13 +21,16 @@ class Interface:
     def __init__(self) -> None:
         self.log_buffer = deque(maxlen = 5)
 
-        # Start the live
+    # Internal update methods
+    def _init(self) -> None:
+        if hasattr(self, "_layout"):
+            return
+
         self._layout = self._render_view()
         self._live = Live(self._layout)
         self._live.console.clear()
         self._live.start()
 
-    # Internal update methods
     def _render_view(self) -> Layout:
         layout = Layout()
         layout.split_column(
@@ -94,11 +97,14 @@ class Interface:
 
     # Public methods
     def update_log(self, event: str, message: str) -> None:
+        self._init()
         self.log_buffer.append((datetime.now().strftime("%H:%M:%S"), event, message))
         self._layout["bottom"].update(self._render_table())
 
     def update_last_change(self, *args, **kwargs) -> None:
+        self._init()
         self._layout["right"].update(self._render_change(*args, **kwargs))
 
     def update_general(self, reload: bool, connections: int) -> None:
+        self._init()
         self._layout["left"].update(self._render_general(reload, connections))
