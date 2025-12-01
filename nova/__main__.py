@@ -1,102 +1,68 @@
 # Copyright (c) 2024-2025 iiPython
 
 # Modules
-import tomllib
+import json
 import asyncio
 from pathlib import Path
 
-import click
+import asyncclick
 from rich.console import Console
 
-from . import __version__, __encoding__
-from .plugins import fetch_plugin
-from .internal.building import NovaBuilder
+from . import __version__
+from nova.engine import NovaEngine
+
+# Handle engine startup
+def fetch_engine() -> NovaEngine:
+    config_file = Path("nova.jsonc")
+    if config_file.is_file():
+        config_file = json.loads("\n".join(
+            [line for line in config_file.read_text().splitlines() if line.strip()[:2] != "//"]
+        ))
+
+    else:
+        rcon.print("[red bold]No nova.jsonc file was found, please create one.[/]")
+        exit(1)
+
+    return NovaEngine(config_file)
 
 # CLI
 rcon = Console()
-version_string = f"\U0001f680 Nova {__version__}"
 
-@click.group
-def nova() -> None:
+@asyncclick.group
+async def nova() -> None:
     """A lightning fast tool for building websites."""
     pass
 
 @nova.command()
-def version() -> None:
+async def version() -> None:
     """Displays the current Nova CLI version."""
-    rcon.print(f"[yellow bold]{version_string}[/]")
+    rcon.print(f"[yellow bold]\U0001f680 Nova {__version__}, powered by [cyan]Uvicorn[/], [cyan]Jinja2[/], and [red]Love[/].[/]")
+    rcon.print("[bright_black]GitHub: [cyan]https://github.com/iiPythonx/nova[/][/]")
 
-# Initialization
-config_file = Path("nova.toml")
-if config_file.is_file():
-    config = tomllib.loads(config_file.read_text(__encoding__))
+@nova.command()
+async def build() -> None:
+    """Builds your app into servable HTML."""
 
-    # Setup building
-    mapping = config["project"]["mapping"].split(":")
-    def create_builder(debug: bool) -> NovaBuilder:
-        builder = NovaBuilder(
-            Path(mapping[0]).absolute(),
-            Path(mapping[1]).absolute(),
-            debug,
-            config["project"].get("build-exclude") or [],
-            config["project"].get("after-build")
-        )
+    engine = fetch_engine()
+    rcon.print(await engine.build())
+    # rcon.print(f"[green]\u2713 App built in [b]{create_builder(False).wrapped_build()}ms[/]![/]")
 
-        # Initialize plugins
-        active_plugins = [fetch_plugin("static")(builder, {})]  # type: ignore
-        for plugin, plugin_config in config.get("plugins", {}).items():
-            active_plugins.append(fetch_plugin(plugin)(builder, plugin_config))  # type: ignore
+@nova.command()
+@asyncclick.option("--host", default = "127.0.0.1", help = "Set the host to run on, defaults to 127.0.0.1.")
+@asyncclick.option("--port", default = 8000, type = int, help = "Set the port to bind to, defaults to 8000.")
+@asyncclick.option("--reload", is_flag = True, help = "Enables Nova's hot-reloading feature.")
+@asyncclick.option("--open", is_flag = True, help = "Automatically opens the web server in your default browser.")
+async def serve(host: str, port: int, reload: bool, open: bool) -> None:
+    """Launches a local development server with the built app."""
+    from nova.internal.stack import Stack
 
-        builder.register_plugins(active_plugins)
-        return builder
-
-    # Link up config-needing commands
-    @nova.command()
-    def build() -> None:
-        """Builds your app into servable HTML."""
-        rcon.print(f"[green]\u2713 App built in [b]{create_builder(False).wrapped_build()}ms[/]![/]")
-
-    @nova.command()
-    @click.option("--host", default = "127.0.0.1", help = "Set the host to run on, defaults to 127.0.0.1.")
-    @click.option("--port", default = 8000, type = int, help = "Set the port to bind to, defaults to 8000.")
-    @click.option("--reload", is_flag = True, help = "Enables Nova's hot-reloading feature.")
-    @click.option("--open", is_flag = True, help = "Automatically opens the web server in your default browser.")
-    def serve(host: str, port: int, reload: bool, open: bool) -> None:
-        """Launches a local development server with the built app."""
-        from nova.internal.stack import Stack
-
-        flags = config.get("flags", {})
-        asyncio.run(Stack(
-            host,
-            port,
-            open or flags.get("open"),
-            create_builder(reload or flags.get("reload"))
-        ).start())
-
-else:
-
-    @nova.command()
-    def init() -> None:
-        """Initializes a new Nova project in the current directory."""
-        rcon.print(f"[yellow bold]{version_string} | Project Initialization[/]")
-
-        # Ask for the locations
-        source_location = rcon.input("Source location (default: [green]src[/]): ") or "src"
-        destination_location = rcon.input("Destination location (default: [green]dist[/]): ") or "dist"
-
-        # Create them if they don't exist
-        def check_path(path: Path) -> None:
-            if not (not path.is_file() and path.parent.is_dir()):
-                rcon.print(f"\n[red]> Invalid location given: '{path}'.[/]")
-                exit(1)
-
-            path.mkdir(exist_ok = True)
-
-        check_path(Path(source_location))
-        check_path(Path(destination_location))
-
-        # Write to file
-        config_file.write_text(f"[project]\nmapping = \"{source_location}:{destination_location}\"")
+    flags = config.get("flags", {})
+    asyncio.run(Stack(
+        host,
+        port,
+        open or flags.get("open"),
+        create_builder(reload or flags.get("reload"))
+    ).start())
 
 # Handle launching CLI
 if __name__ == "__main__":

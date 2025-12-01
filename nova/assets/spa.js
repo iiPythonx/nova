@@ -1,5 +1,5 @@
-// Copyright (c) 2024 iiPython
-(() => {
+// Copyright (c) 2024-2025 iiPython
+{
     const pages = [%s];
     const length = location.origin.length;
     const cache = {};
@@ -21,4 +21,4 @@
         }
     }
     setup_links(document);
-})();
+}
