@@ -1,6 +1,7 @@
 # Copyright (c) 2025 iiPython
 
 # Modules
+import traceback
 from typing import Optional
 
 from rich.console import Group
@@ -43,11 +44,16 @@ class Interface:
         deps: Optional[list[str]] = None
     ) -> Panel:
         if error is not None:
-            content = Group(
-                "[red underline]Jinja2 Exception[/]",
-                str(error)
-            )
-
+            self._live.update(Panel(
+                Padding("\n".join(traceback.format_exception(error, limit = -1)), (1, 1)),
+                title = "Jinja2 Exception",
+                title_align = "left",
+                subtitle = "(c) 2024-2025 iiPython",
+                subtitle_align = "right",
+                border_style = "red"
+            ))
+            return Panel("")
+            
         elif info and file and deps:
             content = Group(
                 f"[bright_black]{file}",
@@ -85,6 +91,7 @@ class Interface:
     # Public methods
     def update_last_change(self, *args, **kwargs) -> None:
         self._init()
+        self._live.update(self._layout)
         self._layout["bottom"].update(self._render_change(*args, **kwargs))
 
     def update_general(self, reload: bool, connections: int) -> None:

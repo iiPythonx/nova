@@ -96,42 +96,46 @@ class DevelopmentStack:
         signal.signal(signal.SIGINT, handle_sigint)
 
         async for changes in awatch(self.engine.config.source, stop_event = stop_event):
-            info = await self.engine.build(self.dev_mode)
             for _, file in changes:
-                file = Path(file)
+                try:
+                    info = await self.engine.build(self.dev_mode)
+                    file = Path(file)
 
-                # Identify dependencies
-                def resolve(file: Path) -> list[Path]:
-                    if file.is_relative_to(self.engine.config.static):
-                        file = self.engine.config.source / file.relative_to(self.engine.config.static)
+                    # Identify dependencies
+                    def resolve(file: Path) -> list[Path]:
+                        if file.is_relative_to(self.engine.config.static):
+                            file = self.engine.config.source / file.relative_to(self.engine.config.static)
 
-                    dependencies = info.dependencies.get(file, [])
-                    for dependency in dependencies:
-                        dependencies += resolve(dependency)
+                        dependencies = info.dependencies.get(file, [])
+                        for dependency in dependencies:
+                            dependencies += resolve(dependency)
 
-                    return dependencies
+                        return dependencies
 
-                dependencies = [
-                    p.relative_to(self.engine.config.source).with_suffix(".html" if p.suffix in [".j2", ".jinja", ".jinja2"] else p.suffix)
-                    for p in resolve(file) + [file]
-                ]
-                for index, dep in enumerate(dependencies.copy()):
-                    dependencies[index] = Path("/".join(x for x in str(dep).split("/")[1:])) if dep.is_relative_to("static") else dep
-
-                # Handle SPA as well
-                spa_plugin = self.engine.config.plugins.get("spa")
-                if spa_plugin is not None:
-                    spa_source = spa_plugin.source.relative_to(self.engine.config.output)
+                    dependencies = [
+                        p.relative_to(self.engine.config.source).with_suffix(".html" if p.suffix in [".j2", ".jinja", ".jinja2"] else p.suffix)
+                        for p in resolve(file) + [file]
+                    ]
                     for index, dep in enumerate(dependencies.copy()):
-                        if not dep.is_relative_to(spa_source):
-                            continue
+                        dependencies[index] = Path("/".join(x for x in str(dep).split("/")[1:])) if dep.is_relative_to("static") else dep
 
-                        dependencies[index] = dep.relative_to(spa_source)
+                    # Handle SPA as well
+                    spa_plugin = self.engine.config.plugins.get("spa")
+                    if spa_plugin is not None:
+                        spa_source = spa_plugin.source.relative_to(self.engine.config.output)
+                        for index, dep in enumerate(dependencies.copy()):
+                            if not dep.is_relative_to(spa_source):
+                                continue
 
-                # Broadcast
-                self.interface.update_last_change(info, str(file), deps = (str(_) for _ in dependencies))
-                for client in self.clients:
-                    await client.send(json.dumps([
-                        f"/{str(clean.parent) + '/' if str(clean.parent) != '.' else ''}{clean.name if clean.name != 'index' else ''}"
-                        for clean in [page.with_suffix("") for page in dependencies]
-                    ]))
+                            dependencies[index] = dep.relative_to(spa_source)
+
+                    # Broadcast
+                    self.interface.update_last_change(info, str(file), deps = (str(_) for _ in dependencies))
+                    for client in self.clients:
+                        await client.send(json.dumps([
+                            f"/{str(clean.parent) + '/' if str(clean.parent) != '.' else ''}{clean.name if clean.name != 'index' else ''}"
+                            for clean in [page.with_suffix("") for page in dependencies]
+                        ]))
+
+                except Exception as e:
+                    self.interface.update_last_change(None, str(file), error = e)
