@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from jinja2 import Environment, FileSystemLoader
 
 from nova.plugins import Plugin, LOAD_ORDER, fetch_plugin
-from nova.plugins.plugin_static import StaticPlugin
 
 # Initialization
 RE_JINJA_EXTEND = re.compile(r"{% \w* [\"'](\w.+)[\"'][\w ]* %}")
@@ -28,6 +27,7 @@ class EngineConfig:
 @dataclass
 class BuildInformation:
     time_taken: float
+    plugin_time_taken: dict[str, float]
     dependencies: dict[Path, list[Path]]
 
 class NovaEngine:
@@ -54,7 +54,7 @@ class NovaEngine:
             shutil.rmtree(self.config.output)
 
         # Process Jinja2 files
-        start, dependencies = time.time(), {}
+        start, dependencies = time.perf_counter(), {}
         for file in self.config.source.rglob("*"):
             if file.suffix not in [".jinja2", ".j2", ".html"] or file.is_relative_to(self.config.static):
                 continue
@@ -76,11 +76,14 @@ class NovaEngine:
                 dependencies[dependency] = (dependencies.get(dependency, [])) + [file]
 
         # Process plugins
-        start, time_taken = time.time(), time.time() - start
-        for plugin in [self.config.plugins[p] for p in LOAD_ORDER if p in self.config.plugins]:
-            print(plugin.build(False))
+        time_taken = {}
+        for name, plugin in [(p, self.config.plugins[p]) for p in LOAD_ORDER if p in self.config.plugins]:
+            start = time.perf_counter()
+            plugin.build(False)
+            time_taken[name] = time.perf_counter() - start
 
         return BuildInformation(
+            time.perf_counter() - start,
             time_taken,
             dependencies
         )
