@@ -15,6 +15,7 @@ from nova.plugins import Plugin, LOAD_ORDER, fetch_plugin
 # Initialization
 RE_JINJA_EXTEND = re.compile(r"{% \w* [\"'](\w.+)[\"'][\w ]* %}")
 RE_HTML_REFERENCE = re.compile(r"<(?:link|script).* (?:href|src) ?= ?[\"']([\w/.]+)[\"'].*>")
+DEV_MODE_JS = "<script>(new WebSocket(`ws://${window.location.host}/_nova`)).addEventListener(\"message\",e=>{if(JSON.parse(e.data).includes(window.location.pathname))window.location.reload();});</script></body></html>"
 
 # Handle engine
 @dataclass
@@ -35,9 +36,9 @@ class NovaEngine:
 
         # Load in settings
         self.config = EngineConfig(
-            Path(config["source"]),
-            Path(config["output"]),
-            Path(config["source"]) / "static",
+            Path(config["source"]).resolve(),
+            Path(config["output"]).resolve(),
+            (Path(config["source"]) / "static").resolve(),
             {}
         )
 
@@ -47,7 +48,7 @@ class NovaEngine:
         # Setup Jinja2 environment
         self.jinja2 = Environment(loader = FileSystemLoader(self.config.source))
 
-    async def build(self) -> BuildInformation:
+    async def build(self, dev_mode: bool = False) -> BuildInformation:
 
         # Clean the old output location
         if self.config.output.is_dir():
@@ -67,7 +68,7 @@ class NovaEngine:
             if not target_file.parent.is_dir():
                 target_file.parent.mkdir(parents = True)
 
-            target_file.write_text(result_html)
+            target_file.write_text(result_html if not dev_mode else result_html.split("</body>")[0] + DEV_MODE_JS)
 
             # Track dependencies
             source_html = file.read_text()
@@ -79,7 +80,7 @@ class NovaEngine:
         time_taken = {}
         for name, plugin in [(p, self.config.plugins[p]) for p in LOAD_ORDER if p in self.config.plugins]:
             start = time.perf_counter()
-            plugin.build(False)
+            plugin.build(dev_mode)
             time_taken[name] = time.perf_counter() - start
 
         return BuildInformation(

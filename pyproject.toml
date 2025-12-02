@@ -25,9 +25,8 @@ dependencies = [
     "rich>=13.9.4",
     "jinja2>=3.1.4",
     "watchfiles>=0.22.0",
-    "websockets>=14.2",
     "asyncclick>=8.3.0.7",
-    "uvicorn>=0.38.0",
+    "websockets>=15.0.1",
 ]
 
 [project.urls]

@@ -14,7 +14,7 @@ class StaticPlugin(Plugin):
         super().__init__(*args)
 
         self.source = self.engine.config.source / "static"
-        self.output = self.engine.config.output / "static"
+        self.output = self.engine.config.output
 
         # Hooks
         atexit.register(self.ensure_symlink_removal)

@@ -2,7 +2,6 @@
 
 # Modules
 import json
-import asyncio
 from pathlib import Path
 
 import asyncclick
@@ -10,6 +9,7 @@ from rich.console import Console
 
 from . import __version__
 from nova.engine import NovaEngine
+from nova.engine.develop import DevelopmentStack
 
 # Handle engine startup
 def fetch_engine() -> NovaEngine:
@@ -36,6 +36,7 @@ async def nova() -> None:
 @nova.command()
 async def version() -> None:
     """Displays the current Nova CLI version."""
+
     rcon.print(f"[yellow bold]\U0001f680 Nova {__version__}, powered by [cyan]Uvicorn[/], [cyan]Jinja2[/], and [red]Love[/].[/]")
     rcon.print("[bright_black]GitHub: [cyan]https://github.com/iiPythonx/nova[/][/]")
 
@@ -43,9 +44,8 @@ async def version() -> None:
 async def build() -> None:
     """Builds your app into servable HTML."""
 
-    engine = fetch_engine()
-    rcon.print(await engine.build())
-    # rcon.print(f"[green]\u2713 App built in [b]{create_builder(False).wrapped_build()}ms[/]![/]")
+    info = await fetch_engine().build()
+    rcon.print(f"[green]\u2713 App built in [b]{info.time_taken * 1000:.2f}ms[/]![/]")
 
 @nova.command()
 @asyncclick.option("--host", default = "127.0.0.1", help = "Set the host to run on, defaults to 127.0.0.1.")
@@ -54,15 +54,8 @@ async def build() -> None:
 @asyncclick.option("--open", is_flag = True, help = "Automatically opens the web server in your default browser.")
 async def serve(host: str, port: int, reload: bool, open: bool) -> None:
     """Launches a local development server with the built app."""
-    from nova.internal.stack import Stack
 
-    flags = config.get("flags", {})
-    asyncio.run(Stack(
-        host,
-        port,
-        open or flags.get("open"),
-        create_builder(reload or flags.get("reload"))
-    ).start())
+    await DevelopmentStack(fetch_engine(), reload).launch(host, port, open)
 
 # Handle launching CLI
 if __name__ == "__main__":
