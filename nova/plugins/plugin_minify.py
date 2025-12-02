@@ -18,19 +18,19 @@ class MinifyPlugin(Plugin):
         }
 
         self.exec = {}
-        for suffix in self.config["suffixes"]:
-            if suffix not in self.mapping:
-                rcon.print(f"[yellow]\u26a0  Minification file type unknown: '{suffix}'.[/]")
+        for glob in self.config["glob"]:
+            if glob not in self.mapping:
+                rcon.print(f"[yellow]\u26a0  Minification file type unknown: '{glob}'.[/]")
 
-            for executable in self.mapping[suffix]["reqs"]:
+            for executable in self.mapping[glob]["reqs"]:
                 self.exec[executable] = fetch_binary(executable)
 
-    def on_build(self, dev: bool) -> None:
+    def build(self, dev: bool) -> None:
         if dev and not self.config.get("minify_dev"):
             return  # Minification is disabled in development
 
         suffix_list = {}
-        for file in self.builder.destination.rglob("*"):
+        for file in self.engine.config.output.rglob("*"):
             if file.suffix not in self.mapping or file.suffix not in self.config["suffixes"]:
                 continue
 
@@ -46,8 +46,8 @@ class MinifyPlugin(Plugin):
     def _execute(self, segments: list[str | Path]) -> None:
         subprocess.run(segments, stdout = subprocess.DEVNULL)
 
-        line = " ".join((str(segment.relative_to(Path.cwd())) if segment not in self.exec.values() else segment.name) if isinstance(segment, Path) else segment for segment in segments)
-        self._push_log(3, "+", line if len(line) < 130 else line[:130] + " ...")
+        # line = " ".join((str(segment.relative_to(Path.cwd())) if segment not in self.exec.values() else segment.name) if isinstance(segment, Path) else segment for segment in segments)
+        # self._push_log(3, "+", line if len(line) < 130 else line[:130] + " ...")
 
     def _minify_js(self, files: list[Path]) -> None:
         self._execute([

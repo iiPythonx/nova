@@ -10,21 +10,20 @@ from dataclasses import dataclass
 
 from jinja2 import Environment, FileSystemLoader
 
-# from nova.plugins import Plugin, fetch_plugin
+from nova.plugins import Plugin, LOAD_ORDER, fetch_plugin
+from nova.plugins.plugin_static import StaticPlugin
 
 # Initialization
 RE_JINJA_EXTEND = re.compile(r"{% \w* [\"'](\w.+)[\"'][\w ]* %}")
 RE_HTML_REFERENCE = re.compile(r"<(?:link|script).* (?:href|src) ?= ?[\"']([\w/.]+)[\"'].*>")
 
 # Handle engine
-type Plugin = object
-
 @dataclass
 class EngineConfig:
     source: Path
     output: Path
     static: Path
-    plugins: list[Plugin]
+    plugins: dict[str, Plugin]
 
 @dataclass
 class BuildInformation:
@@ -39,9 +38,11 @@ class NovaEngine:
             Path(config["source"]),
             Path(config["output"]),
             Path(config["source"]) / "static",
-            []
-            # [fetch_plugin(plugin["type"])(self, plugin) for plugin in config["plugins"]]  # type: ignore
+            {}
         )
+
+        for plugin in [{"type": "static"}, *config["plugins"]]:
+            self.config.plugins[plugin["type"]] = fetch_plugin(plugin["type"])(self, plugin)  # type: ignore
 
         # Setup Jinja2 environment
         self.jinja2 = Environment(loader = FileSystemLoader(self.config.source))
@@ -74,7 +75,12 @@ class NovaEngine:
                 dependency = file.parent / dependency if dependency.startswith(".") else self.config.source / Path(dependency.lstrip("/"))
                 dependencies[dependency] = (dependencies.get(dependency, [])) + [file]
 
+        # Process plugins
+        start, time_taken = time.time(), time.time() - start
+        for plugin in [self.config.plugins[p] for p in LOAD_ORDER if p in self.config.plugins]:
+            print(plugin.build(False))
+
         return BuildInformation(
-            time.time() - start,
+            time_taken,
             dependencies
         )

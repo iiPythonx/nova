@@ -1,17 +1,12 @@
 # Copyright (c) 2024-2025 iiPython
 
 # Modules
-import os
 import typing
 import subprocess
 from shutil import which
-from pathlib import Path
 from importlib import import_module
 
 from rich.console import Console
-
-from nova import interface
-from nova.internal.building import NovaBuilder
 
 # Handle plugin initialization
 def plugin_load_callback(name: str, class_name: str) -> typing.Callable:
@@ -38,10 +33,12 @@ available_plugins = {
         "module": plugin_load_callback(".plugin_nonce", "NoncePlugin"),
         "requirements": ["beautifulsoup4", "lxml"]
     },
-    "minify": {
+    "minification": {
         "module": plugin_load_callback(".plugin_minify", "MinifyPlugin"),
     }
 }
+
+LOAD_ORDER = ["static", "sass", "typescript", "spa", "nonce", "minify"]
 
 # Plugin loading wrapper
 rcon = Console()
@@ -49,11 +46,11 @@ rcon = Console()
 def fetch_plugin(plugin_name: str) -> object:
     if plugin_name not in available_plugins:
         raise Exception(f"Invalid plugin name: '{plugin_name}'!")
-    
+
     plugin_meta = available_plugins[plugin_name]
     try:
         return plugin_meta["module"]()
-    
+
     except ImportError:
         if "requirements" not in plugin_meta:
             raise Exception(f"Plugin '{plugin_name}' uses modules that aren't listed as requirements!")
@@ -85,42 +82,8 @@ def fetch_plugin(plugin_name: str) -> object:
             exit(1)
 
 class Plugin:
-    def __init__(self, builder: NovaBuilder, config: dict) -> None:
-        self.config, self.builder = config, builder
+    def __init__(self, engine, config: dict) -> None:
+        self.config, self.engine = config, engine
 
-    def _push_log(self, indent: int, operand: str, text: str) -> None:
-        if self.builder.debug:
-            return
-
-        print(f"\033[90m{' ' * indent}{operand} {text}")
-
-class StaticFileBasedBuilder(Plugin):
-    def __init__(
-        self,
-        builder: NovaBuilder,
-        config: dict,
-        file_associations: tuple[str, ...],
-        destination_extension: str,
-        default_mapping: str,
-    ) -> None:
-        super().__init__(builder, config)
-
-        self.destination_extension = destination_extension
-        self.source, self.destination = builder.source, builder.destination
-
-        for association in file_associations:
-            builder.register_file_associations(association, self.patch_filename)
-
-        # Load mappings
-        self.config = config
-        self.mapping = self.config.get("mapping", default_mapping).split(":")
-
-        # Adjust the source and destination to match the mapping
-        self.source = self.source / self.mapping[0]
-        self.destination = self.destination / self.mapping[1]
-
-    def patch_filename(self, filename: Path) -> str:
-        if filename.parents[-2].name != self.mapping[0]:  # Not our problem
-            return str(filename)
-        
-        return str(Path(os.sep.join([self.mapping[1]] + str(filename).split(os.sep)[1:])).with_suffix(self.destination_extension))
+    def build(self, dev: bool) -> None:
+        pass

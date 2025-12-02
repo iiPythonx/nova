@@ -3,25 +3,25 @@
 # Modules
 from bs4 import BeautifulSoup
 
-from nova import __encoding__
 from . import Plugin
 
 # Handle plugin
 class NoncePlugin(Plugin):
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.nonce = self.config["nonce"]
-        self.destination = self.builder.destination
 
-    def on_build(self, dev: bool) -> None:
+        self.nonce = self.config["nonce"]
+        self.output = self.engine.config.output
+
+    def build(self, dev: bool) -> None:
         if dev:
             return
 
-        for file in self.destination.rglob("*"):
+        for file in self.output.rglob("*"):
             if file.suffix != ".html":
                 continue
 
-            root = BeautifulSoup(file.read_text(__encoding__), "lxml")
+            root = BeautifulSoup(file.read_text(), "lxml")
             for element in root.select("script, link, style"):
                 if element.name == "link" and element.get("rel") != ["stylesheet"]:
                     continue

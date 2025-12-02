@@ -1,4 +1,4 @@
-# Copyright (c) 2024 iiPython
+# Copyright (c) 2024-2025 iiPython
 
 # Modules
 import os
@@ -12,8 +12,9 @@ from . import Plugin
 class StaticPlugin(Plugin):
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.source, self.destination = \
-            self.builder.source / "static", self.builder.destination
+
+        self.source = self.engine.config.source / "static"
+        self.output = self.engine.config.output / "static"
 
         # Hooks
         atexit.register(self.ensure_symlink_removal)
@@ -25,7 +26,7 @@ class StaticPlugin(Plugin):
         elif path.is_dir():
             shutil.rmtree(path)
 
-    def on_build(self, dev: bool) -> None:
+    def build(self, dev: bool) -> None:
         if not self.source.is_dir():
             return
 
@@ -33,34 +34,34 @@ class StaticPlugin(Plugin):
             if not file.is_file():
                 continue
 
-            destination = self.destination / file.relative_to(self.source)
+            output = self.output / file.relative_to(self.source)
             if not file.exists():
-                self.remove(destination)
+                self.remove(output)
                 continue
 
-            if not destination.parent.is_dir():
-                destination.parent.mkdir(parents = True)
+            if not output.parent.is_dir():
+                output.parent.mkdir(parents = True)
 
             if dev:
-                if destination.is_symlink():
+                if output.is_symlink():
                     continue
 
-                elif destination.exists():
-                    self.remove(destination)
+                elif output.exists():
+                    self.remove(output)
 
-                os.symlink(file, destination)
+                os.symlink(file, output)
 
             else:
-                if destination.exists():
-                    self.remove(destination)
+                if output.exists():
+                    self.remove(output)
 
-                (shutil.copytree if file.is_dir() else shutil.copy)(file, destination)
+                (shutil.copytree if file.is_dir() else shutil.copy)(file, output)
 
     def ensure_symlink_removal(self) -> None:
-        for file in self.destination.rglob("*"):
+        for file in self.output.rglob("*"):
             if file.is_symlink():
                 self.remove(file)
 
-        for file in self.destination.rglob("*"):
+        for file in self.output.rglob("*"):
             if file.is_dir() and not any([x.is_file() for x in file.rglob("*")]):
                 shutil.rmtree(file)
