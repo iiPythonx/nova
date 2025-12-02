@@ -14,11 +14,16 @@ from websockets.http11 import Request, Response
 from websockets.asyncio.server import ServerConnection, serve
 from websockets.datastructures import Headers
 
+from nova.engine.interface import Interface
+
 # Improved stack
 class DevelopmentStack:
     def __init__(self, engine, development: bool) -> None:
         self.engine = engine
         self.clients: set[ServerConnection] = set()
+
+        # Store interface
+        self.interface = Interface()
 
         # Toggle flags
         self.dev_mode = development
@@ -52,10 +57,12 @@ class DevelopmentStack:
             async def handle_incoming(websocket: ServerConnection) -> None:
                 try:
                     self.clients.add(websocket)
+                    self.interface.update_general(self.dev_mode, len(self.clients))
                     await websocket.wait_closed()
 
                 finally:
                     self.clients.remove(websocket)
+                    self.interface.update_general(self.dev_mode, len(self.clients))
 
             async with serve(handle_incoming, host, port, process_request = process_request) as ws:
                 await ws.serve_forever()
@@ -71,10 +78,10 @@ class DevelopmentStack:
             webbrowser.open(f"http://{'localhost' if host == '0.0.0.0' else host}:{port}", 2)
 
         await self.engine.build(self.dev_mode)
+        self.interface.update_general(self.dev_mode, 0)
 
         self.task = asyncio.create_task(self.generate_websocket_app(host, port))
         await self.task
-
 
     async def kill(self) -> None:
         self.task.cancel()
@@ -122,6 +129,7 @@ class DevelopmentStack:
                         dependencies[index] = dep.relative_to(spa_source)
 
                 # Broadcast
+                self.interface.update_last_change(info, str(file), deps = (str(_) for _ in dependencies))
                 for client in self.clients:
                     await client.send(json.dumps([
                         f"/{str(clean.parent) + '/' if str(clean.parent) != '.' else ''}{clean.name if clean.name != 'index' else ''}"
