@@ -44,8 +44,13 @@ async def version() -> None:
 async def build() -> None:
     """Builds your app into servable HTML."""
 
+    rcon.print("[bright_black]Performing build...")
+
     info = await fetch_engine().build()
-    rcon.print(f"[green]\u2713 App built in [b]{info.time_taken * 1000:.2f}ms[/]![/]")
+    for plugin, time_taken in info.plugin_time_taken.items():
+        rcon.print(f"[bright_black]  -> (plugin) {plugin:<15} [[b]{time_taken * 1000:>7.2f}ms[/]]")
+    
+    rcon.print(f"[green]\n\u2713 Build successful!           [[b]{info.time_taken * 1000:>7.2f}ms[/]]")
 
 @nova.command()
 @asyncclick.option("--host", default = "127.0.0.1", help = "Set the host to run on, defaults to 127.0.0.1.")

@@ -1,6 +1,6 @@
 # Hide local development project
 src/
-nova.toml
+nova.jsonc
 
 # Hide Python related stuff
 __pycache__/

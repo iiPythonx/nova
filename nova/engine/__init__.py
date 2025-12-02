@@ -42,7 +42,7 @@ class NovaEngine:
             {}
         )
 
-        for plugin in [{"type": "static"}, *config["plugins"]]:
+        for plugin in [{"type": "static"}, *config.get("plugins", [])]:
             self.config.plugins[plugin["type"]] = fetch_plugin(plugin["type"])(self, plugin)  # type: ignore
 
         # Setup Jinja2 environment
@@ -79,9 +79,9 @@ class NovaEngine:
         # Process plugins
         time_taken = {}
         for name, plugin in [(p, self.config.plugins[p]) for p in LOAD_ORDER if p in self.config.plugins]:
-            start = time.perf_counter()
+            plugin_start = time.perf_counter()
             plugin.build(dev_mode)
-            time_taken[name] = time.perf_counter() - start
+            time_taken[name] = time.perf_counter() - plugin_start
 
         return BuildInformation(
             time.perf_counter() - start,
